@@ -1,0 +1,24 @@
+# Ignorar archivos compilados
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Ignorar archivos de configuración
+pom.xml
+*.xml
+*.properties
+
+# Ignorar archivos de dependencias
+node_modules/
+package-lock.json
+
+# Ignorar archivos de IDE
+.idea/
+.vscode/
+*.iml
+
+# Ignorar archivos de logs
+*.log
+
