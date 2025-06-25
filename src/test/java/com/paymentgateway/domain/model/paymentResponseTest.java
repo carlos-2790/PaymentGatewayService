@@ -26,7 +26,7 @@ public class paymentResponseTest {
     private PaymentStatus status;
     private String message;
     private String errorCode;
-    private LocalDateTime pocessedAt;
+    private LocalDateTime processedAt;
     private GatewaySpecificData gatewayData;
 
     /**
@@ -44,7 +44,7 @@ public class paymentResponseTest {
         status = PaymentStatus.COMPLETED;
         message = "Payment processed successfully";
         errorCode = null; // Para pagos exitosos no hay código de error
-        pocessedAt = LocalDateTime.now();
+        processedAt = LocalDateTime.now();
         
         // Datos específicos del gateway (providerId, rawResponse, fees, additionalInfo)
         gatewayData = new GatewaySpecificData(
@@ -74,7 +74,7 @@ public class paymentResponseTest {
             status,                 // COMPLETED
             message,                // mensaje de éxito
             errorCode,              // null para pagos exitosos
-            pocessedAt,             // timestamp del procesamiento
+            processedAt,            // timestamp del procesamiento
             gatewayData             // datos específicos del gateway
         );
 
@@ -97,7 +97,7 @@ public class paymentResponseTest {
         assertThat(response.errorCode()).isNull(); // No debe haber código de error en pagos exitosos
         
         // Verificar timestamp - debe ser muy reciente (usando el nombre correcto del campo)
-        assertThat(response.pocessedAt()).isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS));
+        assertThat(response.processedAt()).isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS));
         
         // Verificar datos del gateway usando los nombres correctos del record
         assertThat(response.gatewayData()).isEqualTo(gatewayData); // Datos específicos del gateway
@@ -129,7 +129,7 @@ public class paymentResponseTest {
             failedStatus,           // FAILED
             errorMessage,           // mensaje de error
             failedErrorCode,        // código de error específico
-            pocessedAt,             // timestamp del intento
+            processedAt,            // timestamp del intento
             null                    // no hay datos del gateway en fallos
         );
 
@@ -172,7 +172,7 @@ public class paymentResponseTest {
         assertThat(response.currency()).isEqualTo(currency);
         assertThat(response.gatewayData()).isEqualTo(gatewayData);
         assertThat(response.errorCode()).isNull(); // No debe haber error
-        assertThat(response.pocessedAt()).isNotNull(); // Debe tener timestamp
+        assertThat(response.processedAt()).isNotNull(); // Debe tener timestamp
     }
 
     /**
@@ -198,9 +198,8 @@ public class paymentResponseTest {
         assertThat(response.status()).isEqualTo(PaymentStatus.FAILED); // Estado debe ser FAILED
         assertThat(response.paymentReference()).isEqualTo(paymentReference);
         assertThat(response.message()).isEqualTo(errorMessage); // Mensaje de error
-        assertThat(response.errorCode()).isEqualTo(errorCode); // Código de error
-        assertThat(response.gatewayTransactionId()).isNull(); // No hay ID de transacción
-        assertThat(response.gatewayData()).isNull(); // No hay datos del gateway
-        assertThat(response.pocessedAt()).isNotNull(); // Debe tener timestamp
+        assertThat(response.errorCode()).isEqualTo(errorCode); // Código de error específico
+        assertThat(response.gatewayData()).isNull(); // No debe haber datos del gateway en fallos
+        assertThat(response.processedAt()).isNotNull(); // Debe tener timestamp del intento
     }
 }

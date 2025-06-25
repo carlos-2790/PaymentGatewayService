@@ -146,7 +146,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should create PayPalDetails successfully with valid data")
         void shouldCreatePayPalDetailsSuccessfully() {
-            CreditCardDetails.PayPalDetails details = new CreditCardDetails.PayPalDetails(
+            PayPalDetails details = new PayPalDetails(
                 email,
                 returnUrl,
                 cancelUrl
@@ -160,7 +160,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should throw IllegalArgumentException for null email")
         void shouldThrowExceptionForNullEmail() {
-            assertThatThrownBy(() -> new CreditCardDetails.PayPalDetails(null, returnUrl, cancelUrl))
+            assertThatThrownBy(() -> new PayPalDetails(null, returnUrl, cancelUrl))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Email cannot be null or empty");
         }
@@ -168,7 +168,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should throw IllegalArgumentException for empty email")
         void shouldThrowExceptionForEmptyEmail() {
-            assertThatThrownBy(() -> new CreditCardDetails.PayPalDetails("  ", returnUrl, cancelUrl))
+            assertThatThrownBy(() -> new PayPalDetails("  ", returnUrl, cancelUrl))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Email cannot be null or empty");
         }
@@ -176,7 +176,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should throw IllegalArgumentException for null return URL")
         void shouldThrowExceptionForNullReturnUrl() {
-            assertThatThrownBy(() -> new CreditCardDetails.PayPalDetails(email, null, cancelUrl))
+            assertThatThrownBy(() -> new PayPalDetails(email, null, cancelUrl))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Return URL cannot be null or empty");
         }
@@ -184,7 +184,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should throw IllegalArgumentException for empty return URL")
         void shouldThrowExceptionForEmptyReturnUrl() {
-            assertThatThrownBy(() -> new CreditCardDetails.PayPalDetails(email, "  ", cancelUrl))
+            assertThatThrownBy(() -> new PayPalDetails(email, "  ", cancelUrl))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Return URL cannot be null or empty");
         }
@@ -192,7 +192,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should throw IllegalArgumentException for null cancel URL")
         void shouldThrowExceptionForNullCancelUrl() {
-            assertThatThrownBy(() -> new CreditCardDetails.PayPalDetails(email, returnUrl, null))
+            assertThatThrownBy(() -> new PayPalDetails(email, returnUrl, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Cancel URL cannot be null or empty");
         }
@@ -200,7 +200,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should throw IllegalArgumentException for empty cancel URL")
         void shouldThrowExceptionForEmptyCancelUrl() {
-            assertThatThrownBy(() -> new CreditCardDetails.PayPalDetails(email, returnUrl, "  "))
+            assertThatThrownBy(() -> new PayPalDetails(email, returnUrl, "  "))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Cancel URL cannot be null or empty");
         }

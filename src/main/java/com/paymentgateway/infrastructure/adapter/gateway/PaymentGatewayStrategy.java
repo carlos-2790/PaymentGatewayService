@@ -1,10 +1,14 @@
 package com.paymentgateway.infrastructure.adapter.gateway;
 
-import com.paymentgateway.application.port.PaymentGatewayPort;
-import com.paymentgateway.domain.model.*;
 import java.math.BigDecimal;
 import java.util.Set;
+
 import org.springframework.stereotype.Component;
+
+import com.paymentgateway.application.port.PaymentGatewayPort;
+import com.paymentgateway.domain.model.PaymentDetails;
+import com.paymentgateway.domain.model.PaymentRequest;
+import com.paymentgateway.domain.model.PaymentResponse;
 
 /**
  * Implementacion base del Strategy Pattern para pasarelas de pago
@@ -20,7 +24,7 @@ public abstract class PaymentGatewayStrategy implements PaymentGatewayPort {
     protected void validatePaymentRequest(PaymentRequest request) {
         if (!supportsPaymentMethod(request.paymentMethod())) {
             throw new UnsupportedOperationException(
-                String.format("Payment method %s is not supported by %s", request.paymentMethod(), getGatewayProvider())
+                String.format("Payment method %s is not supported by %s", request.paymentMethod(), gatewayProvider())
             );
         }
 
@@ -32,10 +36,26 @@ public abstract class PaymentGatewayStrategy implements PaymentGatewayPort {
     /**
      * valida el monto del pago
      */
+    protected void validateAmount(BigDecimal amount) {
+        if (amount.compareTo(getMinimumAmount()) < 0) {
+            throw new IllegalArgumentException(
+                String.format("Amount %s is below minimum %s for %s", amount, getMinimumAmount(), gatewayProvider())
+            );
+        }
+        if (amount.compareTo(getMaximumAmount()) > 0) {
+            throw new IllegalArgumentException(
+                String.format("Amount %s exceeds maximum %s for %s", amount, getMaximumAmount(), gatewayProvider())
+            );
+        }
+    }
+
+    /**
+     * valida la moneda del pago
+     */
     protected void validateCurrency(String currency) {
         if (!getSupportedCurrencies().contains(currency.toUpperCase())) {
             throw new IllegalArgumentException(
-                String.format(" Currency %s is not supported by %s", currency, getGatewayProvider())
+                String.format(" Currency %s is not supported by %s", currency, gatewayProvider())
             );
         }
     }
@@ -64,7 +84,7 @@ public abstract class PaymentGatewayStrategy implements PaymentGatewayPort {
      * maneja errores especificos de la pasarela de pago
      */
     protected PaymentResponse handleGatewayError(Exception e, String paymentReference) {
-        String errorMessage = "PAyment processing failed: " + e.getMessage();
+        String errorMessage = "Payment processing failed: " + e.getMessage();
         String errorCode = determineErrorCode(e);
         return PaymentResponse.failure(paymentReference, errorMessage, errorCode);
     }
@@ -79,7 +99,7 @@ public abstract class PaymentGatewayStrategy implements PaymentGatewayPort {
      */
     protected String generateTransactionReference() {
         return (
-            getGatewayProvider().toLowerCase() +
+            gatewayProvider().toLowerCase() +
             "_" +
             System.currentTimeMillis() +
             "_" +

@@ -8,10 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.paymentgateway.domain.model.CreditCardDetails;
+import com.paymentgateway.domain.model.GatewaySpecificData;
 import com.paymentgateway.domain.model.PaymentDetails;
 import com.paymentgateway.domain.model.PaymentMethod;
 import com.paymentgateway.domain.model.PaymentRequest;
 import com.paymentgateway.domain.model.PaymentResponse;
+import com.paymentgateway.domain.model.PaymentStatus;
 import com.paymentgateway.infrastructure.adapter.gateway.PaymentGatewayStrategy;
 import com.paymentgateway.shared.exception.PaymentException;
 import com.stripe.Stripe;
@@ -48,8 +51,7 @@ public class StripePaymentGateway extends PaymentGatewayStrategy {
         PaymentMethod.CREDIT_CARD,
         PaymentMethod.DEBIT_CARD,
         PaymentMethod.APPLE_PAY,
-        PaymentMethod.GOOGLE_PAY,
-        PaymentMethod.PAYPAL
+        PaymentMethod.GOOGLE_PAY
     );
 
     public StripePaymentGateway(@Value("${stripe.api.secret-key}") String apiKey) {
@@ -122,7 +124,7 @@ public class StripePaymentGateway extends PaymentGatewayStrategy {
     }
 
     @Override
-    protected String getGatewayProvider() {
+    public String gatewayProvider() {
         return "STRIPE";
     }
 
@@ -130,7 +132,6 @@ public class StripePaymentGateway extends PaymentGatewayStrategy {
     protected void validatePaymentDetails(PaymentDetails paymentDetails) {
         switch (paymentDetails) {
             case CreditCardDetails cardDetails -> validateCreditCardDetails(cardDetails);
-            case DigitalWalletDetails walletDetails -> validateWalletDetails(walletDetails);
             default -> throw new IllegalArgumentException("Unsupported payment details type for Stripe");
         }
     }
@@ -162,6 +163,86 @@ public class StripePaymentGateway extends PaymentGatewayStrategy {
             return "CONNECTION_ERROR";
         } else {
             return "UNKNOWN_ERROR";
+        }
+    }
+
+    // Métodos privados auxiliares
+    private PaymentIntentCreateParams buildPaymentIntentParams(PaymentRequest request) {
+        return PaymentIntentCreateParams.builder()
+            .setAmount(request.amount().multiply(new BigDecimal(100)).longValue()) // Stripe usa centavos
+            .setCurrency(request.currency().toLowerCase())
+            .setAutomaticPaymentMethods(
+                PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
+                    .setEnabled(true)
+                    .build()
+            )
+            .putMetadata("payment_reference", request.paymentReference())
+            .build();
+    }
+
+    private PaymentResponse mapStripeResponseToPaymentResponse(PaymentIntent paymentIntent, String paymentReference) {
+        PaymentStatus status = mapStripeStatus(paymentIntent.getStatus());
+        BigDecimal amount = new BigDecimal(paymentIntent.getAmount()).divide(new BigDecimal(100));
+        
+        GatewaySpecificData gatewayData = new GatewaySpecificData(
+            "stripe",
+            paymentIntent.toJson(),
+            calculateStripeFees(amount).toString(),
+            "Stripe payment: " + paymentIntent.getStatus()
+        );
+
+        if (status == PaymentStatus.COMPLETED) {
+            return PaymentResponse.success(
+                paymentIntent.getId(),
+                paymentReference,
+                amount,
+                paymentIntent.getCurrency().toUpperCase(),
+                gatewayData
+            );
+        } else {
+            return PaymentResponse.failure(
+                paymentReference,
+                "Payment " + paymentIntent.getStatus(),
+                determineErrorCodeFromStatus(paymentIntent.getStatus())
+            );
+        }
+    }
+
+    private PaymentStatus mapStripeStatus(String stripeStatus) {
+        return switch (stripeStatus) {
+            case "succeeded" -> PaymentStatus.COMPLETED;
+            case "processing" -> PaymentStatus.PROCESSING;
+            case "canceled" -> PaymentStatus.CANCELLED;
+            case "requires_payment_method", "requires_confirmation", "requires_action" -> PaymentStatus.PENDING;
+            default -> PaymentStatus.FAILED;
+        };
+    }
+
+    private String determineErrorCodeFromStatus(String status) {
+        return switch (status) {
+            case "canceled" -> "PAYMENT_CANCELED";
+            case "requires_payment_method" -> "INVALID_PAYMENT_METHOD";
+            case "requires_action" -> "ACTION_REQUIRED";
+            default -> "PAYMENT_FAILED";
+        };
+    }
+
+    private BigDecimal calculateStripeFees(BigDecimal amount) {
+        // Stripe cobra 2.9% + $0.30 por transacción
+        BigDecimal feePercentage = new BigDecimal("0.029");
+        BigDecimal fixedFee = new BigDecimal("0.30");
+        return amount.multiply(feePercentage).add(fixedFee);
+    }
+
+    private void validateCreditCardDetails(CreditCardDetails cardDetails) {
+        if (cardDetails.cardNumber() == null || cardDetails.cardNumber().trim().isEmpty()) {
+            throw new IllegalArgumentException("Credit card number is required");
+        }
+        if (cardDetails.cvv() == null || cardDetails.cvv().trim().isEmpty()) {
+            throw new IllegalArgumentException("CVV is required");
+        }
+        if (cardDetails.expiryMonth() == null || cardDetails.expiryYear() == null) {
+            throw new IllegalArgumentException("Expiry date is required");
         }
     }
 }

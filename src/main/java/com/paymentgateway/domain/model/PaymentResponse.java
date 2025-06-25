@@ -16,7 +16,7 @@ public record PaymentResponse(
     PaymentStatus status,
     String message,
     String errorCode,
-    LocalDateTime pocessedAt,
+    LocalDateTime processedAt,
     GatewaySpecificData gatewayData
 ) {
     public static PaymentResponse success(
@@ -33,7 +33,7 @@ public record PaymentResponse(
             amount,
             currency,
             PaymentStatus.COMPLETED,
-            "Payment processed successful",
+            "Payment processed successfully",
             null,
             LocalDateTime.now(),
             gatewayData
@@ -55,5 +55,3 @@ public record PaymentResponse(
         );
     }
 }
-
-record GatewaySpecificData(String providerId, String rawResponse, String fees, String additionalInfo) {}
