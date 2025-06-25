@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "mvn spring-boot:run",
+    "docker:compose:up": "docker compose up -d",
+    "docker:compose:down": "docker compose down",
     "test": "mvn test",
     "format": "prettier --write \"src/**/*.java\"",
     "format:check": "prettier --check \"src/**/*.java\"",

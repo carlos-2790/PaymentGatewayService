@@ -1,10 +1,21 @@
 package com.paymentgateway.domain.model;
 
-import com.paymentgateway.shared.exception.PaymentException;
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.paymentgateway.shared.exception.PaymentException;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 /**
  * Entidad principal del dominio de pagos
@@ -12,57 +23,74 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "payments")
+@Schema(description = "Entidad de pago procesado")
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Schema(description = "ID único del pago", example = "0be0f74c-7710-4a91-a49b-8b225d61d968")
     private UUID id;
 
     @Column(nullable = false, unique = true)
+    @Schema(description = "Referencia única del pago", example = "test-ref-123")
     private String paymentReference;
 
     @Column(nullable = false)
+    @Schema(description = "Monto del pago", example = "100.50")
     private BigDecimal amount;
 
     @Column(nullable = false, length = 3)
+    @Schema(description = "Código de moneda ISO 4217", example = "USD")
     private String currency;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Schema(description = "Estado actual del pago", example = "COMPLETED")
     private PaymentStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Schema(description = "Método de pago utilizado", example = "CREDIT_CARD")
     private PaymentMethod paymentMethod;
 
     @Column(name = "gateway_provider", nullable = false)
+    @Schema(description = "Proveedor de la pasarela de pago", example = "stripe")
     private String gatewayProvider;
 
     @Column(name = "gateway_transaction_id")
+    @Schema(description = "ID de transacción de la pasarela", example = "txn_123456789")
     private String gatewayTransactionId;
 
     @Column(name = "customer_id", nullable = false)
+    @Schema(description = "ID del cliente", example = "cust-123")
     private String customerId;
 
     @Column(name = "merchant_id", nullable = false)
+    @Schema(description = "ID del comercio", example = "merch-456")
     private String merchantId;
 
     @Column(columnDefinition = "TEXT")
+    @Schema(description = "Descripción del pago", example = "Test Payment")
     private String description;
 
     @Column(name = "failure_reason")
+    @Schema(description = "Razón del fallo en caso de error")
     private String failureReason;
 
     @Column(name = "created_at", nullable = false)
+    @Schema(description = "Fecha y hora de creación", example = "2025-06-25T19:32:48.1317594")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @Schema(description = "Fecha y hora de última actualización", example = "2025-06-25T19:32:49.1317594")
     private LocalDateTime updatedAt;
 
     @Column(name = "completed_at")
+    @Schema(description = "Fecha y hora de completado", example = "2025-06-25T19:32:49.1317594")
     private LocalDateTime completedAt;
 
     @Version
+    @Schema(description = "Versión para control de concurrencia", example = "2")
     private Long version;
 
     // Constructor protegido para JPA
@@ -130,14 +158,17 @@ public class Payment {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @Schema(description = "Indica si el pago está completado", example = "true")
     public boolean isCompleted() {
         return this.status == PaymentStatus.COMPLETED;
     }
 
+    @Schema(description = "Indica si el pago está pendiente", example = "false")
     public boolean isPending() {
         return this.status == PaymentStatus.PENDING;
     }
 
+    @Schema(description = "Indica si el pago falló", example = "false")
     public boolean isFailed() {
         return this.status == PaymentStatus.FAILED;
     }
