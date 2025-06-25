@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [ main, master ]
 
+# Permisos necesarios para deployment y comentarios en PRs
+permissions:
+  contents: read          # Leer el código del repositorio
+  issues: write          # Escribir comentarios en issues (si es necesario)
+  pull-requests: write   # Escribir comentarios en pull requests (si es necesario)
+  deployments: write     # Para deployments (si es necesario)
+
 env:
   JAVA_VERSION: '21'
   MAVEN_OPTS: '-Dmaven.repo.local=.m2/repository -Xmx1024m'

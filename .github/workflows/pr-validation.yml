@@ -5,6 +5,12 @@ on:
     branches: [ main, master ]
     types: [opened, synchronize, reopened]
 
+# Permisos necesarios para que el GITHUB_TOKEN pueda escribir comentarios
+permissions:
+  contents: read          # Leer el código del repositorio
+  issues: write          # Escribir comentarios en issues
+  pull-requests: write   # Escribir comentarios en pull requests
+
 env:
   JAVA_VERSION: '21'
 
