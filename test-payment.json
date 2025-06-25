@@ -1,0 +1,17 @@
+{
+    "paymentReference": "test-ref-123",
+    "amount": 100.50,
+    "currency": "USD",
+    "paymentMethod": "CREDIT_CARD",
+    "customerId": "cust-123",
+    "merchantId": "merch-456",
+    "description": "Test Payment",
+    "paymentDetails": {
+        "type": "CREDIT_CARD",
+        "cardNumber": "4242424242424242",
+        "expiryMonth": "12",
+        "expiryYear": "2028",
+        "cvv": "123",
+        "cardHolderName": "Juan Perez"
+    }
+} 
