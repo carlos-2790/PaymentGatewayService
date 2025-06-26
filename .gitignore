@@ -1,3 +1,7 @@
+# =================================
+# JAVA & SPRING BOOT PROJECT
+# =================================
+
 # Compiled class files
 *.class
 
@@ -10,7 +14,9 @@
 *.tar.gz
 *.rar
 
-# Maven
+# =================================
+# MAVEN
+# =================================
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -21,25 +27,323 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
+.flattened-pom.xml
 
-# Node.js
+# =================================
+# GRADLE (por si cambias a Gradle)
+# =================================
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# =================================
+# SPRING BOOT ESPECÍFICO
+# =================================
+# Spring Boot DevTools
+.spring-boot-devtools.properties
+
+# Spring Boot Actuator
+actuator/
+
+# Application properties con secretos
+application-local.properties
+application-dev.properties
+application-prod.properties
+application-secrets.properties
+
+# =================================
+# BASE DE DATOS
+# =================================
+# H2 Database
+*.db
+*.h2.db
+*.mv.db
+*.trace.db
+
+# SQLite
+*.sqlite
+*.sqlite3
+
+# Database dumps
+*.sql
+*.dump
+
+# =================================
+# VARIABLES DE ENTORNO Y SECRETOS
+# =================================
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# Archivos de configuración con secretos
+config/secrets.yml
+secrets.yml
+*.key
+*.pem
+*.p12
+*.jks
+keystore.jks
+
+# =================================
+# NODE.JS & NPM
+# =================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+.yarn-integrity
+.npm
+.eslintcache
 
-# IDE
+# Package-lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# =================================
+# IDEs Y EDITORES
+# =================================
+# IntelliJ IDEA
 .idea/
 *.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# Eclipse
+.project
+.classpath
+.c9/
+*.pydevproject
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+.target
+.tern-project
+.texlipse
+.springBeans
+.recommenders/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
 .vscode/
+.history/
+*.code-workspace
+
+# Vim
 *.swp
 *.swo
+*~
+.netrwhist
 
-# OS
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =================================
+# SISTEMAS OPERATIVOS
+# =================================
+# macOS
 .DS_Store
-Thumbs.db
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# Logs
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =================================
+# LOGS Y REPORTES
+# =================================
+# Application logs
 *.log
 logs/
-*.md
+log/
+*.log.*
+
+# Test reports
+/test-output/
+/test-results/
+/reports/
+
+# Coverage reports
+.coverage
+coverage/
+*.lcov
+htmlcov/
+.nyc_output
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# JaCoCo
+jacoco.exec
+jacoco-it.exec
+.jacoco/
+
+# =================================
+# DOCKER
+# =================================
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.local.yml
+.docker/
+
+# =================================
+# TESTING
+# =================================
+# TestContainers
+.testcontainers/
+
+# JUnit
+*.junit
+.junit/
+
+# Mockito
+mockito-extensions/
+
+# =================================
+# HERRAMIENTAS DE BUILD Y CI/CD
+# =================================
+# SonarQube
+.sonar/
+.scannerwork/
+
+# Checkstyle
+checkstyle-result.xml
+
+# SpotBugs
+spotbugsXml.xml
+spotbugs.xml
+
+# PMD
+pmd.xml
+
+# JMeter
+*.jmx.log
+
+# =================================
+# ARCHIVOS TEMPORALES
+# =================================
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.swp
+*.swo
+*~
+
+# Cache directories
+.cache/
+.npm/
+.yarn/
+.pnpm-store/
+
+# =================================
+# ARCHIVOS DE CONFIGURACIÓN LOCAL
+# =================================
+# Local configuration
+local.properties
+application-local.yml
+bootstrap-local.yml
+
+# IDE configuration
+.factorypath
+.apt_generated
+.apt_generated_test
+
+# =================================
+# ARCHIVOS ESPECÍFICOS DEL PROYECTO
+# =================================
+# Payment Gateway specific
+payment-test-data/
+test-payments/
+mock-data/
+
+# Archivos de prueba con datos sensibles
+test-payment.json
+sample-payment.json
+
+# Certificados de prueba
+test-certificates/
+*.crt
+*.cert
+
+# =================================
+# ARCHIVOS QUE NO DEBEN IGNORARSE
+# =================================
+# Mantener estos archivos importantes
+!.gitkeep
+!.gitignore
+!.github/
+!src/main/resources/application.yml
+!src/main/resources/application-*.yml
+!docker-compose.yml
+!Dockerfile
+!README.md
+!pom.xml

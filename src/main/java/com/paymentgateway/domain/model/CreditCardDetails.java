@@ -12,16 +12,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record CreditCardDetails(
     @Schema(description = "Número de la tarjeta de crédito", example = "4242424242424242", required = true)
     String cardNumber,
-    
-    @Schema(description = "Mes de vencimiento (MM)", example = "12", required = true)
-    String expiryMonth,
-    
-    @Schema(description = "Año de vencimiento (YYYY)", example = "2028", required = true)
-    String expiryYear,
-    
-    @Schema(description = "Código de verificación (CVV)", example = "123", required = true)
-    String cvv,
-    
+
+    @Schema(description = "Mes de vencimiento (MM)", example = "12", required = true) String expiryMonth,
+
+    @Schema(description = "Año de vencimiento (YYYY)", example = "2028", required = true) String expiryYear,
+
+    @Schema(description = "Código de verificación (CVV)", example = "123", required = true) String cvv,
+
     @Schema(description = "Nombre del titular de la tarjeta", example = "Juan Perez", required = true)
     String cardHolderName
 ) implements PaymentDetails {
@@ -72,4 +69,4 @@ public record CreditCardDetails(
             throw new IllegalArgumentException("Formato de fecha de expiración inválido");
         }
     }
-} 
+}
