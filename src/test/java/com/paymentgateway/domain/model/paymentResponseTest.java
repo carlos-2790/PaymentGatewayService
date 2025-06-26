@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ public class paymentResponseTest {
         message = "Payment processed successfully";
         errorCode = null; // Para pagos exitosos no hay código de error
         processedAt = LocalDateTime.now();
-        
+
         // Datos específicos del gateway (providerId, rawResponse, fees, additionalInfo)
         gatewayData = new GatewaySpecificData(
             "stripe", // providerId
@@ -63,42 +62,42 @@ public class paymentResponseTest {
     @DisplayName("Debería crear una respuesta de pago exitosa")
     void deberiaCrearUnaRespuestaDePagoExitosa() {
         // ARRANGE: Los datos ya están preparados en setUp()
-        
+
         // ACT: Crear la respuesta de pago con datos válidos
         PaymentResponse response = new PaymentResponse(
-            success,                // true - pago exitoso
-            gatewayTransactionId,   // ID de transacción del gateway
-            paymentReference,       // referencia del pago original
-            amount,                 // monto procesado
-            currency,               // moneda
-            status,                 // COMPLETED
-            message,                // mensaje de éxito
-            errorCode,              // null para pagos exitosos
-            processedAt,            // timestamp del procesamiento
-            gatewayData             // datos específicos del gateway
+            success, // true - pago exitoso
+            gatewayTransactionId, // ID de transacción del gateway
+            paymentReference, // referencia del pago original
+            amount, // monto procesado
+            currency, // moneda
+            status, // COMPLETED
+            message, // mensaje de éxito
+            errorCode, // null para pagos exitosos
+            processedAt, // timestamp del procesamiento
+            gatewayData // datos específicos del gateway
         );
 
         // ASSERT: Verificar que todos los campos se asignaron correctamente
-        
+
         // Verificar estado de éxito
         assertThat(response.success()).isTrue(); // Debe ser exitoso
-        
+
         // Verificar identificadores
         assertThat(response.gatewayTransactionId()).isEqualTo(gatewayTransactionId); // ID de transacción correcto
         assertThat(response.paymentReference()).isEqualTo(paymentReference); // Referencia original correcta
-        
+
         // Verificar datos monetarios
         assertThat(response.amount()).isEqualByComparingTo(amount); // Monto exacto (BigDecimal)
         assertThat(response.currency()).isEqualTo(currency); // Moneda correcta
-        
+
         // Verificar estado y mensajes
         assertThat(response.status()).isEqualTo(status); // Estado COMPLETED
         assertThat(response.message()).isEqualTo(message); // Mensaje de éxito
         assertThat(response.errorCode()).isNull(); // No debe haber código de error en pagos exitosos
-        
+
         // Verificar timestamp - debe ser muy reciente (usando el nombre correcto del campo)
         assertThat(response.processedAt()).isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS));
-        
+
         // Verificar datos del gateway usando los nombres correctos del record
         assertThat(response.gatewayData()).isEqualTo(gatewayData); // Datos específicos del gateway
         assertThat(response.gatewayData().providerId()).isEqualTo("stripe"); // Proveedor correcto
@@ -118,19 +117,19 @@ public class paymentResponseTest {
         PaymentStatus failedStatus = PaymentStatus.FAILED;
         String errorMessage = "Insufficient funds";
         String failedErrorCode = "INSUFFICIENT_FUNDS";
-        
+
         // ACT: Crear respuesta de pago fallido
         PaymentResponse response = new PaymentResponse(
-            failedSuccess,          // false - pago fallido
-            null,                   // no hay ID de transacción en fallos
-            paymentReference,       // referencia del pago original
-            amount,                 // monto que se intentó procesar
-            currency,               // moneda
-            failedStatus,           // FAILED
-            errorMessage,           // mensaje de error
-            failedErrorCode,        // código de error específico
-            processedAt,            // timestamp del intento
-            null                    // no hay datos del gateway en fallos
+            failedSuccess, // false - pago fallido
+            null, // no hay ID de transacción en fallos
+            paymentReference, // referencia del pago original
+            amount, // monto que se intentó procesar
+            currency, // moneda
+            failedStatus, // FAILED
+            errorMessage, // mensaje de error
+            failedErrorCode, // código de error específico
+            processedAt, // timestamp del intento
+            null // no hay datos del gateway en fallos
         );
 
         // ASSERT: Verificar que los campos de error se asignaron correctamente
@@ -140,7 +139,7 @@ public class paymentResponseTest {
         assertThat(response.message()).isEqualTo(errorMessage); // Mensaje de error
         assertThat(response.errorCode()).isEqualTo(failedErrorCode); // Código de error específico
         assertThat(response.gatewayData()).isNull(); // No hay datos del gateway en fallos
-        
+
         // Los datos del pago original deben mantenerse
         assertThat(response.paymentReference()).isEqualTo(paymentReference);
         assertThat(response.amount()).isEqualByComparingTo(amount);
@@ -187,11 +186,7 @@ public class paymentResponseTest {
         String errorCode = "CARD_DECLINED";
 
         // ACT: Usar el método factory para crear respuesta fallida
-        PaymentResponse response = PaymentResponse.failure(
-            paymentReference,
-            errorMessage,
-            errorCode
-        );
+        PaymentResponse response = PaymentResponse.failure(paymentReference, errorMessage, errorCode);
 
         // ASSERT: Verificar que se creó correctamente como fallida
         assertThat(response.success()).isFalse(); // Debe ser fallido

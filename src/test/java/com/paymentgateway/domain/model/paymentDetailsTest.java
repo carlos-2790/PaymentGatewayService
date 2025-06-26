@@ -32,13 +32,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should create CreditCardDetails successfully with valid data")
         void shouldCreateCreditCardDetailsSuccessfully() {
-            CreditCardDetails details = new CreditCardDetails(
-                cardNumber,
-                expiryMonth,
-                expiryYear,
-                cvv,
-                cardHolderName
-            );
+            CreditCardDetails details = new CreditCardDetails(cardNumber, expiryMonth, expiryYear, cvv, cardHolderName);
 
             assertThat(details.cardNumber()).isEqualTo(cardNumber);
             assertThat(details.expiryMonth()).isEqualTo(expiryMonth);
@@ -146,11 +140,7 @@ class PaymentDetailsTest {
         @Test
         @DisplayName("Should create PayPalDetails successfully with valid data")
         void shouldCreatePayPalDetailsSuccessfully() {
-            PayPalDetails details = new PayPalDetails(
-                email,
-                returnUrl,
-                cancelUrl
-            );
+            PayPalDetails details = new PayPalDetails(email, returnUrl, cancelUrl);
 
             assertThat(details.email()).isEqualTo(email);
             assertThat(details.returnUrl()).isEqualTo(returnUrl);

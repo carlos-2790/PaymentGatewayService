@@ -1,13 +1,5 @@
 package com.paymentgateway.infrastructure.adapter.gateway.stripe;
 
-import java.math.BigDecimal;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import com.paymentgateway.domain.model.CreditCardDetails;
 import com.paymentgateway.domain.model.GatewaySpecificData;
 import com.paymentgateway.domain.model.PaymentDetails;
@@ -21,6 +13,12 @@ import com.stripe.Stripe;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.RefundCreateParams;
+import java.math.BigDecimal;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 /**
  * Implementacion del Stripe para el patron STRATEGY
@@ -172,9 +170,7 @@ public class StripePaymentGateway extends PaymentGatewayStrategy {
             .setAmount(request.amount().multiply(new BigDecimal(100)).longValue()) // Stripe usa centavos
             .setCurrency(request.currency().toLowerCase())
             .setAutomaticPaymentMethods(
-                PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                    .setEnabled(true)
-                    .build()
+                PaymentIntentCreateParams.AutomaticPaymentMethods.builder().setEnabled(true).build()
             )
             .putMetadata("payment_reference", request.paymentReference())
             .build();
@@ -183,7 +179,7 @@ public class StripePaymentGateway extends PaymentGatewayStrategy {
     private PaymentResponse mapStripeResponseToPaymentResponse(PaymentIntent paymentIntent, String paymentReference) {
         PaymentStatus status = mapStripeStatus(paymentIntent.getStatus());
         BigDecimal amount = new BigDecimal(paymentIntent.getAmount()).divide(new BigDecimal(100));
-        
+
         GatewaySpecificData gatewayData = new GatewaySpecificData(
             "stripe",
             paymentIntent.toJson(),

@@ -1,4 +1,3 @@
-
 package com.paymentgateway;
 
 import org.springframework.boot.SpringApplication;
@@ -10,5 +9,4 @@ public class PaymentGatewayServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(PaymentGatewayServiceApplication.class, args);
     }
-
 }

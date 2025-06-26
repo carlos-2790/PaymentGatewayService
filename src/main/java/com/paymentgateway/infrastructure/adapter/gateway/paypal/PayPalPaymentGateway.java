@@ -1,13 +1,5 @@
 package com.paymentgateway.infrastructure.adapter.gateway.paypal;
 
-import java.math.BigDecimal;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import com.paymentgateway.domain.model.CreditCardDetails;
 import com.paymentgateway.domain.model.GatewaySpecificData;
 import com.paymentgateway.domain.model.PayPalDetails;
@@ -18,6 +10,12 @@ import com.paymentgateway.domain.model.PaymentResponse;
 import com.paymentgateway.domain.model.PaymentStatus;
 import com.paymentgateway.infrastructure.adapter.gateway.PaymentGatewayStrategy;
 import com.paymentgateway.shared.exception.PaymentException;
+import java.math.BigDecimal;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 /**
  * Implementación de PayPal para el patrón Strategy
@@ -34,14 +32,16 @@ public class PayPalPaymentGateway extends PaymentGatewayStrategy {
 
     private static final Set<String> SUPPORTED_CURRENCIES = Set.of("USD", "EUR", "GBP", "CAD", "AUD", "JPY");
     private static final Set<PaymentMethod> SUPPORTED_PAYMENT_METHODS = Set.of(
-            PaymentMethod.PAYPAL,
-            PaymentMethod.CREDIT_CARD,
-            PaymentMethod.DEBIT_CARD);
+        PaymentMethod.PAYPAL,
+        PaymentMethod.CREDIT_CARD,
+        PaymentMethod.DEBIT_CARD
+    );
 
     public PayPalPaymentGateway(
-            @Value("${paypal.client.id}") String clientId,
-            @Value("${paypal.client.secret}") String clientSecret,
-            @Value("${paypal.environment:sandbox}") String environment) {
+        @Value("${paypal.client.id}") String clientId,
+        @Value("${paypal.client.secret}") String clientSecret,
+        @Value("${paypal.environment:sandbox}") String environment
+    ) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.environment = environment;
@@ -57,17 +57,18 @@ public class PayPalPaymentGateway extends PaymentGatewayStrategy {
             String transactionId = simulatePayPalPayment(request);
 
             GatewaySpecificData gatewayData = new GatewaySpecificData(
-                    "paypal",
-                    "{\"status\":\"COMPLETED\"}",
-                    calculatePayPalFees(request.amount()),
-                    "PayPal payment processed successfully");
+                "paypal",
+                "{\"status\":\"COMPLETED\"}",
+                calculatePayPalFees(request.amount()),
+                "PayPal payment processed successfully"
+            );
             return PaymentResponse.success(
-                    transactionId,
-                    request.paymentReference(),
-                    request.amount(),
-                    request.currency(),
-                    gatewayData);
-
+                transactionId,
+                request.paymentReference(),
+                request.amount(),
+                request.currency(),
+                gatewayData
+            );
         } catch (Exception e) {
             log.error("PayPal payment processing failed for reference: {}", request.paymentReference(), e);
             return handleGatewayError(e, request.paymentReference());
@@ -81,22 +82,23 @@ public class PayPalPaymentGateway extends PaymentGatewayStrategy {
             PaymentStatus status = simulatePayPalStatusCheck(gatewayTransactionId);
 
             GatewaySpecificData gatewayData = new GatewaySpecificData(
-                    "paypal",
-                    "{\"status\": \"" + status + "\"}",
-                    null,
-                    "Status retrieved from PayPal");
+                "paypal",
+                "{\"status\": \"" + status + "\"}",
+                null,
+                "Status retrieved from PayPal"
+            );
             return new PaymentResponse(
-                    status == PaymentStatus.COMPLETED,
-                    gatewayTransactionId,
-                    null,
-                    null,
-                    null,
-                    status,
-                    "Payment status retrieved",
-                    null,
-                    java.time.LocalDateTime.now(),
-                    gatewayData);
-
+                status == PaymentStatus.COMPLETED,
+                gatewayTransactionId,
+                null,
+                null,
+                null,
+                status,
+                "Payment status retrieved",
+                null,
+                java.time.LocalDateTime.now(),
+                gatewayData
+            );
         } catch (Exception e) {
             log.error("Failed to check PayPal payment status for transaction: {}", gatewayTransactionId, e);
             throw new PaymentException("Failed to retrieve PayPal payment status", e);
@@ -111,20 +113,20 @@ public class PayPalPaymentGateway extends PaymentGatewayStrategy {
 
             if (canceled) {
                 return new PaymentResponse(
-                        true,
-                        gatewayTransactionId,
-                        null,
-                        null,
-                        null,
-                        PaymentStatus.CANCELLED,
-                        "Payment cancelled successfully",
-                        null,
-                        java.time.LocalDateTime.now(),
-                        null);
+                    true,
+                    gatewayTransactionId,
+                    null,
+                    null,
+                    null,
+                    PaymentStatus.CANCELLED,
+                    "Payment cancelled successfully",
+                    null,
+                    java.time.LocalDateTime.now(),
+                    null
+                );
             } else {
                 return PaymentResponse.failure(null, "Failed to cancel PayPal payment", "CANCEL_FAILED");
             }
-
         } catch (Exception e) {
             log.error("Failed to cancel PayPal payment: {}", gatewayTransactionId, e);
             return PaymentResponse.failure(null, "PayPal cancellation failed", "CANCEL_ERROR");
@@ -137,10 +139,11 @@ public class PayPalPaymentGateway extends PaymentGatewayStrategy {
             // Simulación de reembolso en PayPal
             String refundId = simulatePayPalRefund(gatewayTransactionId, reason);
             GatewaySpecificData gatewayData = new GatewaySpecificData(
-                    "paypal",
-                    "{\"refund_id\": \"" + refundId + "\"}",
-                    null,
-                    "PayPal refund processed successfully: " + reason);
+                "paypal",
+                "{\"refund_id\": \"" + refundId + "\"}",
+                null,
+                "PayPal refund processed successfully: " + reason
+            );
             return PaymentResponse.success(refundId, null, null, null, gatewayData);
         } catch (Exception e) {
             log.error("Failed to refund PayPal payment: {}", gatewayTransactionId, e);

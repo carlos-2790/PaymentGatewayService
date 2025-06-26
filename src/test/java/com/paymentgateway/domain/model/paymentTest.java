@@ -2,16 +2,14 @@ package com.paymentgateway.domain.model;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.paymentgateway.shared.exception.PaymentException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import com.paymentgateway.shared.exception.PaymentException;
 
 /**
  * Clase de pruebas unitarias para la entidad Payment
@@ -62,9 +60,18 @@ class PaymentTest {
         @DisplayName("Should create a payment successfully with valid data")
         void shouldCreatePaymentSuccessfully() {
             // ARRANGE: Los datos ya están preparados en setUp()
-            
+
             // ACT: Crear el pago con datos válidos
-            Payment payment = new Payment(paymentReference, amount, currency, paymentMethod, gatewayProvider, customerId, merchantId, description);
+            Payment payment = new Payment(
+                paymentReference,
+                amount,
+                currency,
+                paymentMethod,
+                gatewayProvider,
+                customerId,
+                merchantId,
+                description
+            );
 
             // ASSERT: Verificar que todos los campos se asignaron correctamente
             assertThat(payment.getId()).isNotNull(); // El ID debe generarse automáticamente
@@ -77,10 +84,10 @@ class PaymentTest {
             assertThat(payment.getMerchantId()).isEqualTo(merchantId); // Comercio correcto
             assertThat(payment.getDescription()).isEqualTo(description); // Descripción correcta
             assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING); // Estado inicial debe ser PENDING
-            
+
             // Verificar timestamps - la fecha de creación debe ser muy reciente
             assertThat(payment.getCreatedAt()).isCloseTo(LocalDateTime.now(), within(1, ChronoUnit.SECONDS));
-            
+
             // Campos que deben estar vacíos en un pago recién creado
             assertThat(payment.getUpdatedAt()).isNull(); // Aún no se ha actualizado
             assertThat(payment.getCompletedAt()).isNull(); // Aún no se ha completado
@@ -96,7 +103,18 @@ class PaymentTest {
         @DisplayName("Should throw PaymentException for null amount")
         void shouldThrowExceptionForNullAmount() {
             // ACT & ASSERT: Intentar crear pago con amount = null debe fallar
-            assertThatThrownBy(() -> new Payment(paymentReference, null, currency, paymentMethod, gatewayProvider, customerId, merchantId, description))
+            assertThatThrownBy(() ->
+                new Payment(
+                    paymentReference,
+                    null,
+                    currency,
+                    paymentMethod,
+                    gatewayProvider,
+                    customerId,
+                    merchantId,
+                    description
+                )
+            )
                 .isInstanceOf(PaymentException.class) // Debe lanzar la excepción específica del dominio
                 .hasMessage("Payment amount must be positive"); // Con el mensaje exacto esperado
         }
@@ -109,7 +127,18 @@ class PaymentTest {
         @DisplayName("Should throw PaymentException for zero amount")
         void shouldThrowExceptionForZeroAmount() {
             // ACT & ASSERT: Monto = 0 debe ser rechazado
-            assertThatThrownBy(() -> new Payment(paymentReference, BigDecimal.ZERO, currency, paymentMethod, gatewayProvider, customerId, merchantId, description))
+            assertThatThrownBy(() ->
+                new Payment(
+                    paymentReference,
+                    BigDecimal.ZERO,
+                    currency,
+                    paymentMethod,
+                    gatewayProvider,
+                    customerId,
+                    merchantId,
+                    description
+                )
+            )
                 .isInstanceOf(PaymentException.class)
                 .hasMessage("Payment amount must be positive");
         }
@@ -122,7 +151,18 @@ class PaymentTest {
         @DisplayName("Should throw PaymentException for negative amount")
         void shouldThrowExceptionForNegativeAmount() {
             // ACT & ASSERT: Monto negativo debe ser rechazado
-            assertThatThrownBy(() -> new Payment(paymentReference, new BigDecimal("-10.00"), currency, paymentMethod, gatewayProvider, customerId, merchantId, description))
+            assertThatThrownBy(() ->
+                new Payment(
+                    paymentReference,
+                    new BigDecimal("-10.00"),
+                    currency,
+                    paymentMethod,
+                    gatewayProvider,
+                    customerId,
+                    merchantId,
+                    description
+                )
+            )
                 .isInstanceOf(PaymentException.class)
                 .hasMessage("Payment amount must be positive");
         }
@@ -135,7 +175,18 @@ class PaymentTest {
         @DisplayName("Should throw PaymentException for empty currency")
         void shouldThrowExceptionForEmptyCurrency() {
             // ACT & ASSERT: Moneda vacía (solo espacios) debe ser rechazada
-            assertThatThrownBy(() -> new Payment(paymentReference, amount, "  ", paymentMethod, gatewayProvider, customerId, merchantId, description))
+            assertThatThrownBy(() ->
+                new Payment(
+                    paymentReference,
+                    amount,
+                    "  ",
+                    paymentMethod,
+                    gatewayProvider,
+                    customerId,
+                    merchantId,
+                    description
+                )
+            )
                 .isInstanceOf(PaymentException.class)
                 .hasMessage("Currency is required");
         }
@@ -148,7 +199,18 @@ class PaymentTest {
         @DisplayName("Should throw PaymentException for null payment method")
         void shouldThrowExceptionForNullPaymentMethod() {
             // ACT & ASSERT: PaymentMethod = null debe ser rechazado
-            assertThatThrownBy(() -> new Payment(paymentReference, amount, currency, null, gatewayProvider, customerId, merchantId, description))
+            assertThatThrownBy(() ->
+                new Payment(
+                    paymentReference,
+                    amount,
+                    currency,
+                    null,
+                    gatewayProvider,
+                    customerId,
+                    merchantId,
+                    description
+                )
+            )
                 .isInstanceOf(PaymentException.class)
                 .hasMessage("Payment method is required");
         }
@@ -170,7 +232,16 @@ class PaymentTest {
          */
         @BeforeEach
         void createPayment() {
-            payment = new Payment(paymentReference, amount, currency, paymentMethod, gatewayProvider, customerId, merchantId, description);
+            payment = new Payment(
+                paymentReference,
+                amount,
+                currency,
+                paymentMethod,
+                gatewayProvider,
+                customerId,
+                merchantId,
+                description
+            );
         }
 
         /**
@@ -181,7 +252,7 @@ class PaymentTest {
         @DisplayName("markAsProcessing should succeed when status is PENDING")
         void markAsProcessing_whenPending_shouldSucceed() {
             // ARRANGE: El pago ya está en estado PENDING (creado en @BeforeEach)
-            
+
             // ACT: Marcar como procesando
             payment.markAsProcessing();
 
@@ -236,7 +307,7 @@ class PaymentTest {
         @DisplayName("markAsCompleted should throw exception when status is not PROCESSING")
         void markAsCompleted_whenNotProcessing_shouldThrowException() {
             // ARRANGE: El pago está en PENDING (no en PROCESSING)
-            
+
             // ACT & ASSERT: Intentar completar desde PENDING debe fallar
             assertThatThrownBy(() -> payment.markAsCompleted("txn_123"))
                 .isInstanceOf(PaymentException.class)
