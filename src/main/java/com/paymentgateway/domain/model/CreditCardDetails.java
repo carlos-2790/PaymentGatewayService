@@ -1,9 +1,8 @@
 package com.paymentgateway.domain.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.YearMonth;
 import java.util.regex.Pattern;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Detalles de tarjeta de crédito para pagos
@@ -21,8 +20,8 @@ public record CreditCardDetails(
 
     @Schema(description = "Nombre del titular de la tarjeta", example = "Juan Perez", required = true)
     String cardHolderName
-) implements PaymentDetails {
-
+)
+    implements PaymentDetails {
     private static final Pattern MONTH_PATTERN = Pattern.compile("^(0[1-9]|1[0-2])$");
     private static final Pattern YEAR_PATTERN = Pattern.compile("^([0-9]{4})$");
 
@@ -57,14 +56,13 @@ public record CreditCardDetails(
         try {
             int month = Integer.parseInt(expiryMonth);
             int year = Integer.parseInt(expiryYear);
-            
+
             YearMonth expiryDate = YearMonth.of(year, month);
             YearMonth currentDate = YearMonth.now();
-            
+
             if (expiryDate.isBefore(currentDate)) {
                 throw new IllegalArgumentException("La tarjeta ha expirado");
             }
-            
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Formato de fecha de expiración inválido");
         }

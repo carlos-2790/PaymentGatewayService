@@ -3,7 +3,6 @@ package com.paymentgateway.domain.model;
 import static org.assertj.core.api.Assertions.*;
 
 import java.math.BigDecimal;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +14,15 @@ public class PaymentRequestTest {
         PaymentDetails paymentDetails = new CreditCardDetails("1234567890123456", "09", "2027", "123", "Juan Perez");
 
         PaymentRequest paymentRequest = new PaymentRequest(
-                "1234567890",
-                new BigDecimal("100"),
-                "USD",
-                PaymentMethod.CREDIT_CARD,
-                "1234567890",
-                "1234567890",
-                "Test payment",
-                paymentDetails);
+            "1234567890",
+            new BigDecimal("100"),
+            "USD",
+            PaymentMethod.CREDIT_CARD,
+            "1234567890",
+            "1234567890",
+            "Test payment",
+            paymentDetails
+        );
 
         assertThat(paymentRequest.paymentReference()).isEqualTo("1234567890");
         assertThat(paymentRequest.amount()).isEqualTo(new BigDecimal("100"));
@@ -37,7 +37,8 @@ public class PaymentRequestTest {
     @Test
     @DisplayName("❌ Test payment request - Negative Amount")
     public void testNegativeAmountPaymentRequest() {
-        assertThatThrownBy(() -> new PaymentRequest(
+        assertThatThrownBy(() ->
+            new PaymentRequest(
                 "1234567890",
                 new BigDecimal("-100"),
                 "USD",
@@ -45,7 +46,10 @@ public class PaymentRequestTest {
                 "1234567890",
                 "1234567890",
                 "Test payment",
-                new CreditCardDetails("1234567890123456", "09", "2027", "123", "Juan Perez")))
-                .isInstanceOf(IllegalArgumentException.class).hasMessage("Amount must be positive");
+                new CreditCardDetails("1234567890123456", "09", "2027", "123", "Juan Perez")
+            )
+        )
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Amount must be positive");
     }
 }
