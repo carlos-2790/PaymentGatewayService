@@ -1,10 +1,9 @@
 package com.paymentgateway.application.usecase;
 
-import org.springframework.stereotype.Service;
-
 import com.paymentgateway.application.port.in.ProcessPaymentUseCase;
 import com.paymentgateway.domain.model.Payment;
 import com.paymentgateway.domain.model.PaymentRequest;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ProcessPaymentUseCaseImpl implements ProcessPaymentUseCase {
@@ -23,11 +22,11 @@ public class ProcessPaymentUseCaseImpl implements ProcessPaymentUseCase {
             request.merchantId(),
             request.description()
         );
-        
+
         // Seguir el flujo correcto de estados: PENDING -> PROCESSING -> COMPLETED
         payment.markAsProcessing(); // Cambiar a PROCESSING
         payment.markAsCompleted("txn_123456789"); // Luego completar
-        
+
         return payment;
     }
 }

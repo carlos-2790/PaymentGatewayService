@@ -1,15 +1,13 @@
 package com.paymentgateway.infrastructure.adapter.gateway;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-
 import com.paymentgateway.application.port.PaymentGatewayPort;
 import com.paymentgateway.domain.model.PaymentMethod;
 import com.paymentgateway.shared.exception.PaymentException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 /**
  * Factory para seleccionar la pasarela de pago apropiada
@@ -22,8 +20,9 @@ public class PaymentGatewayFactory {
     private final Map<String, PaymentGatewayPort> gateways;
 
     public PaymentGatewayFactory(
-            @Qualifier("paypalGateway") PaymentGatewayPort paypalGateway,
-            @Qualifier("stripeGateway") PaymentGatewayPort stripeGateway) {
+        @Qualifier("paypalGateway") PaymentGatewayPort paypalGateway,
+        @Qualifier("stripeGateway") PaymentGatewayPort stripeGateway
+    ) {
         this.gateways = Map.of("PAYPAL", paypalGateway, "STRIPE", stripeGateway);
     }
 
@@ -43,14 +42,15 @@ public class PaymentGatewayFactory {
      */
     public PaymentGatewayPort getBestGatewayForPaymentMethod(PaymentMethod paymentMethod) {
         List<PaymentGatewayPort> compatibleGateways = gateways
-                .values()
-                .stream()
-                .filter(gateway -> gateway.supportsPaymentMethod(paymentMethod))
-                .collect(Collectors.toList());
+            .values()
+            .stream()
+            .filter(gateway -> gateway.supportsPaymentMethod(paymentMethod))
+            .collect(Collectors.toList());
         if (compatibleGateways.isEmpty()) {
             throw new PaymentException(
-                    "No compatible payment gateway found for payment method: " + paymentMethod,
-                    "NO_GATEWAY_AVAILABLE");
+                "No compatible payment gateway found for payment method: " + paymentMethod,
+                "NO_GATEWAY_AVAILABLE"
+            );
         }
         return selectOptimalGateway(compatibleGateways, paymentMethod);
     }
@@ -65,19 +65,22 @@ public class PaymentGatewayFactory {
     /**
      * Selecciona la pasarela optima basada en criterios de negocio
      */
-    private PaymentGatewayPort selectOptimalGateway(List<PaymentGatewayPort> compatibleGateways,
-            PaymentMethod paymentMethod) {
+    private PaymentGatewayPort selectOptimalGateway(
+        List<PaymentGatewayPort> compatibleGateways,
+        PaymentMethod paymentMethod
+    ) {
         return switch (paymentMethod) {
-            case DEBIT_CARD, CREDIT_CARD, APPLE_PAY, GOOGLE_PAY -> compatibleGateways.stream()
-                    .filter(gateway -> "STRIPE".equals(gateway.gatewayProvider()))
-                    .findFirst()
-                    .orElse(compatibleGateways.get(0));
-            case PAYPAL -> compatibleGateways.stream()
-                    .filter(gateway -> "PAYPAL".equals(gateway.gatewayProvider()))
-                    .findFirst()
-                    .orElse(compatibleGateways.get(0));
-
-            default -> compatibleGateways.get(0);// por defecto se selecciona la primera pasarela disponible
+            case DEBIT_CARD, CREDIT_CARD, APPLE_PAY, GOOGLE_PAY -> compatibleGateways
+                .stream()
+                .filter(gateway -> "STRIPE".equals(gateway.gatewayProvider()))
+                .findFirst()
+                .orElse(compatibleGateways.get(0));
+            case PAYPAL -> compatibleGateways
+                .stream()
+                .filter(gateway -> "PAYPAL".equals(gateway.gatewayProvider()))
+                .findFirst()
+                .orElse(compatibleGateways.get(0));
+            default -> compatibleGateways.get(0); // por defecto se selecciona la primera pasarela disponible
         };
     }
 }
