@@ -1,5 +1,8 @@
 package com.paymentgateway.domain.model;
 
+import java.time.YearMonth;
+import java.util.regex.Pattern;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -22,6 +25,10 @@ public record CreditCardDetails(
     @Schema(description = "Nombre del titular de la tarjeta", example = "Juan Perez", required = true)
     String cardHolderName
 ) implements PaymentDetails {
+
+    private static final Pattern MONTH_PATTERN = Pattern.compile("^(0[1-9]|1[0-2])$");
+    private static final Pattern YEAR_PATTERN = Pattern.compile("^([0-9]{4})$");
+
     public CreditCardDetails {
         if (cardNumber == null || cardNumber.trim().isEmpty()) {
             throw new IllegalArgumentException("Card number cannot be null or empty");
@@ -37,6 +44,32 @@ public record CreditCardDetails(
         }
         if (cardHolderName == null || cardHolderName.trim().isEmpty()) {
             throw new IllegalArgumentException("Card holder name cannot be null or empty");
+        }
+
+        if (!MONTH_PATTERN.matcher(expiryMonth).matches()) {
+            throw new IllegalArgumentException("Expiry month must be between 01 and 12");
+        }
+        if (!YEAR_PATTERN.matcher(expiryYear).matches()) {
+            throw new IllegalArgumentException("Expiry year must be a valid year");
+        }
+
+        validateExpiryDate(expiryMonth, expiryYear);
+    }
+
+    private static void validateExpiryDate(String expiryMonth, String expiryYear) {
+        try {
+            int month = Integer.parseInt(expiryMonth);
+            int year = Integer.parseInt(expiryYear);
+            
+            YearMonth expiryDate = YearMonth.of(year, month);
+            YearMonth currentDate = YearMonth.now();
+            
+            if (expiryDate.isBefore(currentDate)) {
+                throw new IllegalArgumentException("La tarjeta ha expirado");
+            }
+            
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Formato de fecha de expiración inválido");
         }
     }
 } 

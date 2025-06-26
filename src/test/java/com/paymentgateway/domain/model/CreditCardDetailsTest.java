@@ -30,14 +30,13 @@ public class CreditCardDetailsTest {
     }
 
     @Test
-    @DisplayName("❌ Test Credit Card Details - Inavlid Expiry Month")
+    @DisplayName("❌ Test Credit Card Details - Invalid Expiry Month")
     public void testInvalidExpiryMonthCreditCardDetails() {
+        YearMonth expiredDate = YearMonth.now().minusYears(1);
+        String expiredMonth = String.format("%02d", expiredDate.getMonthValue());
+        String expiredYear = String.format("%04d", expiredDate.getYear());
 
-        YearMonth pastDate = YearMonth.now().minusMonths(1);
-        String pastMonth = String.format("%02d", pastDate.getMonthValue());
-        String pastYear = String.format("%04d", pastDate.getYear());
-
-        assertThatThrownBy(() -> new CreditCardDetails("4242424242424242", pastMonth, pastYear, "123", "Juan Perez"))
+        assertThatThrownBy(() -> new CreditCardDetails("4242424242424242", expiredMonth, expiredYear, "123", "Juan Perez"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("La tarjeta ha expirado");
     }
