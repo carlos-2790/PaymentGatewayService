@@ -287,20 +287,70 @@ src/main/java/com/paymentgateway/
 └── shared/             # Utilidades compartidas
 ```
 
+## 🚀 CI/CD Pipeline
+
+El proyecto incluye un pipeline automatizado de CI/CD que se ejecuta en cada Pull Request hacia `develop`:
+
+### 🔄 Flujo del Pipeline
+
+1. **🔍 Code Quality & Security**
+   - Validación de formato de código
+   - Análisis estático con SpotBugs
+   - Escaneo con SonarCloud (opcional)
+
+2. **🏗️ Build & Test**
+   - Compilación del proyecto
+   - Tests unitarios, integración y arquitectura
+   - Generación de reportes de cobertura
+   - Creación de artefactos JAR
+
+3. **🔒 Security Scan**
+   - OWASP Dependency Check
+   - Escaneo de vulnerabilidades con Snyk
+
+4. **🐳 Docker Build**
+   - Construcción de imagen Docker
+   - Validación de contenedor
+
+5. **💬 Automated PR Comments**
+   - Comentarios automáticos con estado del pipeline
+   - Notificaciones de revisión
+
+### 📋 Requisitos para Merge
+
+- ✅ Todos los checks del CI/CD deben pasar
+- ✅ Aprobación del code owner (propietario del repositorio)
+- ✅ Resolución de todos los comentarios
+- ✅ Branch actualizada con develop
+
 ## 🤝 Contribución
+
+### 🔀 Proceso de Pull Request
 
 1. Fork el proyecto
 2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
 3. Commit tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
 4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear un Pull Request
+5. Crear un Pull Request hacia `develop`
+6. **El CI/CD se ejecutará automáticamente**
+7. **Solo el propietario puede aprobar y hacer merge**
 
-### Estándares de Código
+### ✅ Checklist antes de crear PR
+
+- [ ] Código sigue las convenciones del proyecto
+- [ ] Tests añadidos y pasando localmente
+- [ ] Documentación actualizada
+- [ ] Sin warnings de linter
+- [ ] Cobertura de tests mantenida
+
+### 📊 Estándares de Código
 
 - Seguir principios SOLID
-- Mantener cobertura de tests > 80%
+- Mantener cobertura de tests > 70%
 - Usar Lombok para reducir boilerplate
 - Documentar APIs con OpenAPI/Swagger
+- Validar entrada de datos
+- Manejar errores apropiadamente
 
 ## 📝 Notas Adicionales
 

@@ -1,10 +1,11 @@
-name: CI/CD Pipeline - Payment Gateway Service
+name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [ main, master, develop ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ develop ]
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ develop, main ]
 
 # Permisos necesarios para deployment y comentarios en PRs
 permissions:
@@ -15,167 +16,269 @@ permissions:
 
 env:
   JAVA_VERSION: '21'
-  MAVEN_OPTS: '-Dmaven.repo.local=.m2/repository -Xmx1024m'
+  MAVEN_OPTS: '-Xmx2048m'
 
 jobs:
-  # 🧪 Job 1: Tests Unitarios
-  test:
-    name: 🧪 Tests Unitarios
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: 📥 Checkout código
-      uses: actions/checkout@v4
-      
-    - name: ☕ Configurar JDK ${{ env.JAVA_VERSION }}
-      uses: actions/setup-java@v4
-      with:
-        java-version: ${{ env.JAVA_VERSION }}
-        distribution: 'temurin'
-        
-    - name: 📦 Cache dependencias Maven
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-        
-    - name: 🔍 Verificar estructura del proyecto
-      run: |
-        echo "📂 Estructura del proyecto:"
-        ls -la
-        echo "📂 Contenido de src:"
-        ls -la src/ || echo "❌ Directorio src no encontrado"
-        
-    - name: ✅ Ejecutar tests unitarios
-      run: mvn clean test -B
-      
-    - name: 📊 Generar reporte de cobertura
-      run: mvn jacoco:report -B
-      continue-on-error: true
-      
-    - name: 📈 Subir resultados de tests
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results-${{ github.run_number }}
-        path: |
-          target/surefire-reports/
-          target/site/jacoco/
-        retention-days: 30
-
-  # 🔍 Job 2: Análisis de Calidad
+  # Job de validación de código
   code-quality:
-    name: 🔍 Análisis de Calidad
+    name: 🔍 Code Quality & Security
     runs-on: ubuntu-latest
-    needs: test
     
     steps:
     - name: 📥 Checkout código
       uses: actions/checkout@v4
-        
-    - name: ☕ Configurar JDK ${{ env.JAVA_VERSION }}
+      with:
+        fetch-depth: 0
+    
+    - name: ☕ Configurar Java ${{ env.JAVA_VERSION }}
       uses: actions/setup-java@v4
       with:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: 'temurin'
-        
-    - name: 📦 Cache dependencias Maven
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-        
-    - name: 🏗️ Compilar proyecto
-      run: mvn clean compile -B
-      
-    - name: 🔍 Análisis estático de código
-      run: mvn verify -B
+        cache: maven
+    
+    - name: 🔧 Validar formato de código
+      run: |
+        npm install
+        npm run format:check
+    
+    - name: 🔍 Análisis estático con SpotBugs
+      run: mvn compile spotbugs:check
+      continue-on-error: true
+    
+    - name: 📊 SonarCloud Scan
+      if: github.event_name == 'pull_request'
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       continue-on-error: true
 
-  # 🏗️ Job 3: Build y Empaquetado
-  build:
-    name: 🏗️ Build y Empaquetado
+  # Job de compilación y tests
+  build-and-test:
+    name: 🏗️ Build & Test
     runs-on: ubuntu-latest
-    needs: [test, code-quality]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    needs: code-quality
+    
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_DB: payment_gateway_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     
     steps:
     - name: 📥 Checkout código
       uses: actions/checkout@v4
-      
-    - name: ☕ Configurar JDK ${{ env.JAVA_VERSION }}
+    
+    - name: ☕ Configurar Java ${{ env.JAVA_VERSION }}
       uses: actions/setup-java@v4
       with:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: 'temurin'
-        
-    - name: 📦 Cache dependencias Maven
-      uses: actions/cache@v4
+        cache: maven
+    
+    - name: 🔧 Compilar proyecto
+      run: mvn clean compile -DskipTests
+    
+    - name: 🧪 Ejecutar tests unitarios
+      run: mvn test -Dtest="*Test" -DfailIfNoTests=false
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/payment_gateway_test
+        SPRING_DATASOURCE_USERNAME: test_user
+        SPRING_DATASOURCE_PASSWORD: test_password
+        SPRING_DATA_REDIS_HOST: localhost
+        SPRING_DATA_REDIS_PORT: 6379
+    
+    - name: 🔗 Ejecutar tests de integración
+      run: mvn test -Dtest="*IT" -DfailIfNoTests=false
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/payment_gateway_test
+        SPRING_DATASOURCE_USERNAME: test_user
+        SPRING_DATASOURCE_PASSWORD: test_password
+        SPRING_DATA_REDIS_HOST: localhost
+        SPRING_DATA_REDIS_PORT: 6379
+    
+    - name: 🏛️ Ejecutar tests de arquitectura
+      run: mvn test -Dtest="*ArchTest" -DfailIfNoTests=false
+    
+    - name: 📊 Generar reporte de cobertura
+      run: mvn jacoco:report
+    
+    - name: 📈 Subir cobertura a Codecov
+      uses: codecov/codecov-action@v3
       with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-        
-    - name: 🏗️ Compilar y empaquetar
-      run: mvn clean package -DskipTests -B
-      
-    - name: 📦 Subir artefactos
+        file: ./target/site/jacoco/jacoco.xml
+        flags: unittests
+        name: codecov-umbrella
+      continue-on-error: true
+    
+    - name: 📦 Crear artefacto JAR
+      run: mvn package -DskipTests
+    
+    - name: 💾 Guardar artefactos
       uses: actions/upload-artifact@v4
       with:
-        name: payment-gateway-jar-${{ github.run_number }}
+        name: payment-gateway-jar
         path: target/*.jar
-        retention-days: 30
-        
-    - name: 🏷️ Crear tag de versión
-      if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-      run: |
-        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-        echo "🏷️ Versión detectada: $VERSION"
+        retention-days: 7
 
-  # 🚀 Job 4: Despliegue
-  deploy:
-    name: 🚀 Despliegue
+  # Job de tests de seguridad
+  security-scan:
+    name: 🔒 Security Scan
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-    # environment: production  # Comentado hasta configurar environments en GitHub
+    needs: build-and-test
     
     steps:
-    - name: 📥 Descargar artefactos
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+    
+    - name: ☕ Configurar Java ${{ env.JAVA_VERSION }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 🔍 OWASP Dependency Check
+      run: mvn org.owasp:dependency-check-maven:check
+      continue-on-error: true
+    
+    - name: 🛡️ Snyk Security Scan
+      uses: snyk/actions/maven@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+      continue-on-error: true
+
+  # Job de construcción de imagen Docker
+  docker-build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+    
+    - name: 🐳 Configurar Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 📦 Descargar artefactos
       uses: actions/download-artifact@v4
       with:
-        name: payment-gateway-jar-${{ github.run_number }}
-        
-    - name: 🚀 Simular despliegue
-      run: |
-        echo "🎉 Iniciando despliegue de Payment Gateway Service..."
-        echo "📦 Archivos disponibles para despliegue:"
-        ls -la *.jar
-        echo "✅ Despliegue completado exitosamente!"
-        echo "🌐 Aplicación disponible en: https://payment-gateway.ejemplo.com"
+        name: payment-gateway-jar
+        path: target/
+    
+    - name: 🏗️ Construir imagen Docker
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        tags: payment-gateway:pr-${{ github.event.number }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
-  # 📢 Job 5: Notificaciones
-  notify:
-    name: 📢 Notificaciones
+  # Job de comentarios en PR
+  pr-comment:
+    name: 💬 PR Status Comment
     runs-on: ubuntu-latest
-    needs: [test, code-quality, build, deploy]
-    if: always()
+    needs: [code-quality, build-and-test, security-scan, docker-build]
+    if: always() && github.event_name == 'pull_request'
     
     steps:
-    - name: 📢 Notificar resultado del pipeline
-      run: |
-        echo "📊 Resumen del Pipeline:"
-        echo "🧪 Tests: ${{ needs.test.result }}"
-        echo "🔍 Calidad: ${{ needs.code-quality.result }}"
-        echo "🏗️ Build: ${{ needs.build.result }}"
-        echo "🚀 Deploy: ${{ needs.deploy.result }}"
-        
-        if [ "${{ needs.test.result }}" == "success" ]; then
-          echo "✅ Pipeline ejecutado exitosamente!"
-        else
-          echo "❌ Pipeline falló. Revisar logs de tests."
-          exit 1
-        fi
+    - name: 📝 Comentar estado del PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          
+          const jobs = [
+            { name: 'Code Quality', status: '${{ needs.code-quality.result }}' },
+            { name: 'Build & Test', status: '${{ needs.build-and-test.result }}' },
+            { name: 'Security Scan', status: '${{ needs.security-scan.result }}' },
+            { name: 'Docker Build', status: '${{ needs.docker-build.result }}' }
+          ];
+          
+          const statusEmoji = {
+            'success': '✅',
+            'failure': '❌',
+            'cancelled': '⏹️',
+            'skipped': '⏭️'
+          };
+          
+          let comment = `## 🚀 CI/CD Pipeline Status\n\n`;
+          comment += `**PR:** ${pr.title}\n`;
+          comment += `**Branch:** \`${pr.head.ref}\` → \`${pr.base.ref}\`\n\n`;
+          comment += `### 📊 Jobs Status:\n\n`;
+          
+          jobs.forEach(job => {
+            const emoji = statusEmoji[job.status] || '⚪';
+            comment += `${emoji} **${job.name}**: ${job.status}\n`;
+          });
+          
+          comment += `\n### 📋 Next Steps:\n`;
+          comment += `- ✅ Todos los checks deben estar en verde\n`;
+          comment += `- 👀 Revisar código y tests\n`;
+          comment += `- 🔍 Validar que no hay vulnerabilidades críticas\n`;
+          comment += `- ✨ ¡Listo para merge cuando esté aprobado!\n\n`;
+          comment += `---\n`;
+          comment += `🤖 *Comentario automático del CI/CD Pipeline*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  # Job de notificación de éxito
+  success-notification:
+    name: 🎉 Success Notification
+    runs-on: ubuntu-latest
+    needs: [code-quality, build-and-test, security-scan, docker-build]
+    if: success() && github.event_name == 'pull_request'
+    
+    steps:
+    - name: 🎊 PR Ready for Review
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.pulls.requestReviewers({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+            reviewers: ['${{ github.repository_owner }}']
+          });
+          
+          github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            labels: ['✅ CI-Passed', '👀 Ready-for-Review']
+          });

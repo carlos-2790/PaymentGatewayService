@@ -1,0 +1,18 @@
+# Archivo CODEOWNERS - Define quién puede aprobar cambios en el repositorio
+# Solo el propietario puede aprobar PRs hacia develop y main
+
+# Reglas globales - El propietario del repositorio debe aprobar todos los cambios
+* @{{github.repository_owner}}
+
+# Archivos críticos que requieren aprobación especial
+/.github/ @{{github.repository_owner}}
+/docker-compose.yml @{{github.repository_owner}}
+/Dockerfile @{{github.repository_owner}}
+/pom.xml @{{github.repository_owner}}
+/src/main/resources/application.yml @{{github.repository_owner}}
+
+# Archivos de configuración de seguridad
+/src/main/java/com/paymentgateway/infrastructure/config/ @{{github.repository_owner}}
+
+# Archivos de migración de base de datos
+/src/main/resources/db/migration/ @{{github.repository_owner}} 
