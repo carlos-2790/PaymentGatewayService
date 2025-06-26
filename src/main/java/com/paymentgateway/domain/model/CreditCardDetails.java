@@ -1,8 +1,9 @@
 package com.paymentgateway.domain.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.YearMonth;
 import java.util.regex.Pattern;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Detalles de tarjeta de crédito para pagos
