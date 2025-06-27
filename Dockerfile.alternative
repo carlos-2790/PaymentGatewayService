@@ -1,5 +1,5 @@
-# Etapa 1: Build
-FROM maven:3.9.6-openjdk-21-slim AS builder
+# OPCIÓN 1: Usar una imagen más estable
+FROM maven:3.9-openjdk-21-slim AS builder
 
 WORKDIR /app
 
@@ -50,4 +50,23 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Comando de inicio
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"] 
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+
+# ============================================
+# OPCIÓN 2: Si prefieres usar Eclipse Temurin (más estable)
+# FROM eclipse-temurin:21-jdk AS builder
+# 
+# # Instalar Maven manualmente
+# RUN apt-get update && apt-get install -y maven && rm -rf /var/lib/apt/lists/*
+# 
+# WORKDIR /app
+# COPY pom.xml .
+# RUN mvn dependency:go-offline -B
+# COPY src ./src
+# RUN mvn clean package -DskipTests -B
+# 
+# FROM eclipse-temurin:21-jre-jammy
+# WORKDIR /app
+# COPY --from=builder /app/target/payment-gateway-service-*.jar app.jar
+# EXPOSE 8080
+# ENTRYPOINT ["java", "-jar", "app.jar"] 
