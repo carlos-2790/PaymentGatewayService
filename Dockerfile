@@ -1,5 +1,5 @@
 # Etapa 1: Build
-FROM maven:3.9.6-openjdk-21-slim AS builder
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
 
@@ -17,15 +17,13 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # Etapa 2: Runtime
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jre-alpine
 
 # Crear usuario no-root para seguridad
-RUN groupadd -r paymentgateway && useradd -r -g paymentgateway paymentgateway
+RUN addgroup -S paymentgateway && adduser -S paymentgateway -G paymentgateway
 
 # Instalar herramientas necesarias
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
 # Crear directorios necesarios
 RUN mkdir -p /app/logs && \
