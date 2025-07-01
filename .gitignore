@@ -335,6 +335,33 @@ test-certificates/
 *.cert
 
 # =================================
+# GITHUB ACTIONS & CI/CD ADICIONAL
+# =================================
+# Archivos temporales de workflows
+.github/workflows/.tmp/
+.github/workflows/tmp/
+
+# Artefactos de GitHub Actions
+artifacts/
+coverage-reports/
+
+# Archivos de configuración temporal de CI/CD
+.ci-temp/
+.deployment-temp/
+README-GITHUB-DOCKER.md
+
+# =================================
+# DOCKER ADICIONAL
+# =================================
+# Docker volumes y datos locales
+docker-data/
+docker-volumes/
+
+# Docker Compose overrides adicionales
+docker-compose.dev.yml
+docker-compose.staging.yml
+
+# =================================
 # ARCHIVOS QUE NO DEBEN IGNORARSE
 # =================================
 # Mantener estos archivos importantes

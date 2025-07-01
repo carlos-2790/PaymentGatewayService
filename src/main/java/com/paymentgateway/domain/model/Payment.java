@@ -1,6 +1,11 @@
 package com.paymentgateway.domain.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import com.paymentgateway.shared.exception.PaymentException;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,9 +16,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 /**
  * Entidad principal del dominio de pagos
@@ -21,6 +26,9 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "payments")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Schema(description = "Entidad de pago procesado")
 public class Payment {
 
@@ -91,20 +99,16 @@ public class Payment {
     @Schema(description = "Versión para control de concurrencia", example = "2")
     private Long version;
 
-    // Constructor protegido para JPA
-    protected Payment() {}
-
     // Constructor de dominio
     public Payment(
-        String paymentReference,
-        BigDecimal amount,
-        String currency,
-        PaymentMethod paymentMethod,
-        String gatewayProvider,
-        String customerId,
-        String merchantId,
-        String description
-    ) {
+            String paymentReference,
+            BigDecimal amount,
+            String currency,
+            PaymentMethod paymentMethod,
+            String gatewayProvider,
+            String customerId,
+            String merchantId,
+            String description) {
         validatePaymentCreation(amount, currency, paymentMethod, gatewayProvider, customerId, merchantId);
 
         this.id = UUID.randomUUID();
@@ -172,13 +176,12 @@ public class Payment {
     }
 
     private void validatePaymentCreation(
-        BigDecimal amount,
-        String currency,
-        PaymentMethod paymentMethod,
-        String gatewayProvider,
-        String customerId,
-        String merchantId
-    ) {
+            BigDecimal amount,
+            String currency,
+            PaymentMethod paymentMethod,
+            String gatewayProvider,
+            String customerId,
+            String merchantId) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new PaymentException("Payment amount must be positive");
         }

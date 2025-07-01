@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   postgres:
-    image: postgres:14-alpine
+    image: postgres:15
     container_name: payment-postgres
     environment:
       POSTGRES_DB: payment_gateway
