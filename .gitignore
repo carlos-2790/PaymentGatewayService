@@ -90,6 +90,35 @@ secrets.yml
 keystore.jks
 
 # =================================
+# DOCUMENTACIÓN LOCAL Y PRIVADA
+# =================================
+# Documentación local que contiene información sensible
+docs-local/
+docs-private/
+documentation-local/
+
+# Documentación de configuración sensible (branch protection, security, etc.)
+CONFIGURACION-*.md
+configuracion-*.md
+CONFIG-*.md
+SECURITY-*.md
+security-*.md
+BRANCH-PROTECTION-*.md
+
+# Archivos de configuración local
+application-local.yml
+application-local.yaml
+application-local.properties
+docker-compose.local.yml
+docker-compose.override.yml
+
+# Notas de desarrollo personal
+notes/
+personal-notes/
+dev-notes/
+.notes/
+
+# =================================
 # NODE.JS & NPM
 # =================================
 node_modules/
@@ -212,165 +241,103 @@ $RECYCLE.BIN/
 .nfs*
 
 # =================================
-# LOGS Y REPORTES
+# DOCKER
 # =================================
-# Application logs
+# Archivos de Docker locales
+docker-compose.override.yml
+docker-compose.local.yml
+.dockerignore.local
+
+# Volúmenes de Docker
+docker/data/
+docker/logs/
+docker/backups/
+
+# =================================
+# TESTING
+# =================================
+# Reportes de testing
+test-results/
+coverage/
+.nyc_output/
+junit.xml
+coverage.xml
+
+# TestContainers
+.testcontainers/
+
+# =================================
+# LOGS Y TEMPORALES
+# =================================
+# Archivos de log
 *.log
 logs/
 log/
 *.log.*
 
-# Test reports
-/test-output/
-/test-results/
-/reports/
-
-# Coverage reports
-.coverage
-coverage/
-*.lcov
-htmlcov/
-.nyc_output
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
-
-# JaCoCo
-jacoco.exec
-jacoco-it.exec
-.jacoco/
+# Archivos temporales
+temp/
+tmp/
+cache/
+.cache/
 
 # =================================
-# DOCKER
+# BACKUP Y ARCHIVOS TEMPORALES
 # =================================
-# Docker
-.dockerignore
-docker-compose.override.yml
-docker-compose.local.yml
-.docker/
+# Backups
+*.backup
+*.bak
+backup/
+backups/
+
+# Archivos temporales del sistema
+.tmp/
+.temp/
 
 # =================================
-# TESTING
-# =================================
-# TestContainers
-.testcontainers/
-
-# JUnit
-*.junit
-.junit/
-
-# Mockito
-mockito-extensions/
-
-# =================================
-# HERRAMIENTAS DE BUILD Y CI/CD
+# CONFIGURACIÓN DE HERRAMIENTAS
 # =================================
 # SonarQube
 .sonar/
 .scannerwork/
 
+# JaCoCo
+jacoco.exec
+*.exec
+
+# SpotBugs
+spotbugs.xml
+
 # Checkstyle
 checkstyle-result.xml
 
-# SpotBugs
-spotbugsXml.xml
-spotbugs.xml
-
-# PMD
-pmd.xml
-
-# JMeter
-*.jmx.log
-
 # =================================
-# ARCHIVOS TEMPORALES
+# CERTIFICADOS Y CLAVES PRIVADAS
 # =================================
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.backup
-*.old
-*.orig
-*.rej
-*.swp
-*.swo
-*~
-
-# Cache directories
-.cache/
-.npm/
-.yarn/
-.pnpm-store/
-
-# =================================
-# ARCHIVOS DE CONFIGURACIÓN LOCAL
-# =================================
-# Local configuration
-local.properties
-application-local.yml
-bootstrap-local.yml
-
-# IDE configuration
-.factorypath
-.apt_generated
-.apt_generated_test
-
-# =================================
-# ARCHIVOS ESPECÍFICOS DEL PROYECTO
-# =================================
-# Payment Gateway specific
-payment-test-data/
-test-payments/
-mock-data/
-
-# Archivos de prueba con datos sensibles
-test-payment.json
-sample-payment.json
-
-# Certificados de prueba
-test-certificates/
+# Certificados SSL
 *.crt
-*.cert
+*.cer
+*.der
+*.p7b
+*.p7c
+*.pfx
+
+# Claves privadas
+*.priv
+*.private
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
 
 # =================================
-# GITHUB ACTIONS & CI/CD ADICIONAL
+# CONFIGURACIONES ESPECÍFICAS DEL PROYECTO
 # =================================
-# Archivos temporales de workflows
-.github/workflows/.tmp/
-.github/workflows/tmp/
+# Configuraciones de Payment Gateway específicas
+payment-config-local.yml
+stripe-config-local.json
+paypal-config-local.json
 
-# Artefactos de GitHub Actions
-artifacts/
-coverage-reports/
-
-# Archivos de configuración temporal de CI/CD
-.ci-temp/
-.deployment-temp/
-README-GITHUB-DOCKER.md
-
-# =================================
-# DOCKER ADICIONAL
-# =================================
-# Docker volumes y datos locales
-docker-data/
-docker-volumes/
-
-# Docker Compose overrides adicionales
-docker-compose.dev.yml
-docker-compose.staging.yml
-
-# =================================
-# ARCHIVOS QUE NO DEBEN IGNORARSE
-# =================================
-# Mantener estos archivos importantes
-!.gitkeep
-!.gitignore
-!.github/
-!src/main/resources/application.yml
-!src/main/resources/application-*.yml
-!docker-compose.yml
-!Dockerfile
-!README.md
-!pom.xml
+# Datos de testing con información sensible
+test-data-real.json
+payment-test-data.json

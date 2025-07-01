@@ -52,18 +52,24 @@ public class PaymentEntity {
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
 
-    @Column(nullable = false)
+    @Column(name = "gateway_provider", nullable = false)
     private String gateWayProvider;
 
+    @Column(name = "gateway_transaction_id")
     private String gatewayTransactionId;
+    @Column(name = "customer_id")
     private String customerId;
+    @Column(name = "merchant_id")
     private String merchantId;
     private String description;
+    @Column(name = "failure_reason")
     private String failureReason;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
     @Version
