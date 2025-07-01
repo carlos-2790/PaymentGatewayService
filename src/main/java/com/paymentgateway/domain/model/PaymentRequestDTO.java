@@ -1,7 +1,8 @@
 package com.paymentgateway.domain.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO para recibir requests de pago desde el endpoint REST
@@ -24,7 +25,7 @@ public record PaymentRequestDTO(
 
     @Schema(description = "Descripción del pago", example = "Test Payment") String description,
 
-    @Schema(description = "Detalles específicos del método de pago", required = true) CreditCardDetails paymentDetails // Usar directamente CreditCardDetails por simplicidad
+    @Schema(description = "Detalles específicos del método de pago", required = true) PaymentDetails paymentDetails
 ) {
     public PaymentRequestDTO {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
