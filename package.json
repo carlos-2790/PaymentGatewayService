@@ -4,18 +4,36 @@
   "main": "index.js",
   "scripts": {
     "start": "mvn spring-boot:run",
+    "start:full": "npm run docker:up && npm run start",
+    "start:dev": "npm run docker:up && npm run wait:db && npm run start",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "docker:compose:up": "docker compose up -d",
     "docker:compose:down": "docker compose down",
+    "wait:db": "timeout /t 10 /nobreak >nul 2>&1",
+    "dev": "npm run docker:up && npm run wait:db && mvn spring-boot:run",
+    "dev:clean": "npm run docker:down && npm run docker:up && npm run wait:db && mvn clean spring-boot:run",
     "test": "mvn test",
+    "test:integration": "npm run docker:up && npm run wait:db && mvn test",
+    "test:api": "npx playwright test",
+    "test:api:headed": "npx playwright test --headed",
+    "test:api:debug": "npx playwright test --debug",
+    "test:api:report": "npx playwright show-report",
+    "test:full": "powershell -ExecutionPolicy Bypass -File .\\scripts\\run-api-tests-final.ps1",
+    "test:full:jar": "powershell -ExecutionPolicy Bypass -File .\\scripts\\run-api-tests-final.ps1 -StartupMethod jar",
+    "test:full:docker": "powershell -ExecutionPolicy Bypass -File .\\scripts\\run-api-tests-final.ps1 -StartupMethod docker",
     "format": "prettier --write \"src/**/*.java\"",
     "format:check": "prettier --check \"src/**/*.java\"",
-    "format:all": "prettier --write ."
+    "format:all": "prettier --write .",
+    "clean": "mvn clean && npm run docker:down",
+    "setup": "npm install && npx playwright install"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@playwright/test": "^1.40.0",
     "prettier": "^3.5.3",
     "prettier-plugin-java": "^2.6.8"
   }

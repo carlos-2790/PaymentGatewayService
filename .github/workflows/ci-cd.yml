@@ -2,10 +2,11 @@ name: CI/CD Pipeline
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches: [ develop, main ]
     types: [ opened, synchronize, reopened ]
   push:
     branches: [ develop, main ]
+    # Solo permitir push en develop y main desde workflows automatizados
 
 # Permisos necesarios para deployment y comentarios en PRs
 permissions:
@@ -140,6 +141,14 @@ jobs:
         path: target/*.jar
         retention-days: 7
 
+  # Job de tests E2E de API
+  api-tests:
+    name: 🧪 API Tests E2E
+    uses: ./.github/workflows/api-tests.yml
+    needs: build-and-test
+    with:
+      environment: test
+
   # Job de tests de seguridad
   security-scan:
     name: 🔒 Security Scan
@@ -173,7 +182,7 @@ jobs:
   docker-build:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
-    needs: [build-and-test, security-scan]
+    needs: [build-and-test, api-tests, security-scan]
     if: github.event_name == 'pull_request'
     
     steps:
@@ -203,7 +212,7 @@ jobs:
   pr-comment:
     name: 💬 PR Status Comment
     runs-on: ubuntu-latest
-    needs: [code-quality, build-and-test, security-scan, docker-build]
+    needs: [code-quality, build-and-test, api-tests, security-scan, docker-build]
     if: always() && github.event_name == 'pull_request'
     
     steps:
@@ -220,6 +229,7 @@ jobs:
           const jobs = [
             { name: 'Code Quality', status: '${{ needs.code-quality.result }}' },
             { name: 'Build & Test', status: '${{ needs.build-and-test.result }}' },
+            { name: 'API Tests E2E', status: '${{ needs.api-tests.result }}' },
             { name: 'Security Scan', status: '${{ needs.security-scan.result }}' },
             { name: 'Docker Build', status: '${{ needs.docker-build.result }}' }
           ];
@@ -243,24 +253,46 @@ jobs:
           
           comment += `\n### 📋 Next Steps:\n`;
           comment += `- ✅ Todos los checks deben estar en verde\n`;
+          comment += `- 🧪 Tests E2E de API deben pasar (validaciones y errores)\n`;
           comment += `- 👀 Revisar código y tests\n`;
           comment += `- 🔍 Validar que no hay vulnerabilidades críticas\n`;
           comment += `- ✨ ¡Listo para merge cuando esté aprobado!\n\n`;
           comment += `---\n`;
           comment += `🤖 *Comentario automático del CI/CD Pipeline*`;
           
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
+          // Buscar comentario existente del pipeline principal
+          const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: comment
+            issue_number: context.issue.number,
           });
+          
+          const existingComment = comments.find(comment => 
+            comment.user.type === 'Bot' && 
+            comment.body.includes('🚀 CI/CD Pipeline Status')
+          );
+          
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: comment
+            });
+          } else {
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
 
   # Job de notificación de éxito
   success-notification:
     name: 🎉 Success Notification
     runs-on: ubuntu-latest
-    needs: [code-quality, build-and-test, security-scan, docker-build]
+    needs: [code-quality, build-and-test, api-tests, security-scan, docker-build]
     if: success() && github.event_name == 'pull_request'
     
     steps:
@@ -279,5 +311,33 @@ jobs:
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.issue.number,
-            labels: ['✅ CI-Passed', '👀 Ready-for-Review']
+            labels: ['✅ CI-Passed', '🧪 API-Tests-Passed', '👀 Ready-for-Review']
           });
+
+  # Job de deployment (solo para push a main)
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [code-quality, build-and-test, api-tests, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+    
+    - name: 📦 Descargar artefactos
+      uses: actions/download-artifact@v4
+      with:
+        name: payment-gateway-jar
+        path: target/
+    
+    - name: 🚀 Deploy a Producción
+      run: |
+        echo "🚀 Desplegando Payment Gateway Service a producción..."
+        echo "✅ Deployment simulado exitoso"
+        # Aquí iría la lógica real de deployment
+    
+    - name: 📧 Notificar deployment exitoso
+      run: |
+        echo "📧 Notificando deployment exitoso..."
+        echo "🎉 Payment Gateway Service desplegado en producción"

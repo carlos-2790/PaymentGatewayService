@@ -15,4 +15,24 @@
 /src/main/java/com/paymentgateway/infrastructure/config/ @carlos-2790
 
 # Archivos de migración de base de datos
-/src/main/resources/db/migration/ @carlos-2790 
+/src/main/resources/db/migration/ @carlos-2790
+
+# Propietarios del código - Requieren aprobación para cambios
+
+# Propietario global del repositorio
+* @tu-usuario-github
+
+# Archivos de configuración críticos
+pom.xml @tu-usuario-github
+docker-compose.yml @tu-usuario-github
+.github/ @tu-usuario-github
+
+# Código de dominio y aplicación
+src/main/java/com/paymentgateway/domain/ @tu-usuario-github
+src/main/java/com/paymentgateway/application/ @tu-usuario-github
+
+# Configuración de infraestructura
+src/main/java/com/paymentgateway/infrastructure/config/ @tu-usuario-github
+
+# Tests críticos
+src/test/java/com/paymentgateway/ @tu-usuario-github 

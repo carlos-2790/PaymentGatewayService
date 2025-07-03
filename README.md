@@ -13,6 +13,7 @@ Un servicio de pasarelas de pago desarrollado con **Spring Boot** y **Arquitectu
 - [Variables de Entorno](#-variables-de-entorno)
 - [API Documentation](#-api-documentation)
 - [Testing](#-testing)
+- [Validación y Manejo de Errores](#-validación-y-manejo-de-errores)
 - [Arquitectura](#-arquitectura)
 - [Contribución](#-contribución)
 
@@ -26,6 +27,8 @@ Un servicio de pasarelas de pago desarrollado con **Spring Boot** y **Arquitectu
 - ⚡ **Cache**: Redis para optimización de rendimiento
 - 📚 **Documentación**: Swagger/OpenAPI integrado
 - 🧪 **Testing**: Cobertura completa con TestContainers
+- ✅ **Validación Robusta**: Sistema completo de validación de entrada
+- 🚨 **Manejo de Errores**: Respuestas HTTP consistentes y descriptivas
 
 ## 🛠️ Tecnologías
 
@@ -33,6 +36,7 @@ Un servicio de pasarelas de pago desarrollado con **Spring Boot** y **Arquitectu
 - **Spring Boot 3.2.1**
 - **Spring Security**
 - **Spring Data JPA**
+- **Bean Validation (JSR-303)**
 - **PostgreSQL 14**
 - **Redis 7**
 - **Maven**
@@ -41,6 +45,7 @@ Un servicio de pasarelas de pago desarrollado con **Spring Boot** y **Arquitectu
 - **Swagger/OpenAPI**
 - **Lombok**
 - **MapStruct**
+- **Playwright** (para tests E2E)
 
 ## 📋 Requisitos Previos
 
@@ -218,23 +223,28 @@ Una vez que la aplicación esté ejecutándose, puedes acceder a la documentaci�
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| `POST` | `/api/v1/payments/process` | Procesar un pago |
-| `GET` | `/api/v1/payments/{id}` | Consultar estado de pago |
-| `GET` | `/api/v1/payments` | Listar pagos |
+| `POST` | `/api/v1/payments` | Procesar un pago |
+| `GET` | `/api/v1/payments/health` | Health check del servicio |
+| `POST` | `/api/v1/credit-cards/validate` | Validar tarjeta de crédito |
 
 ### Ejemplo de Request
 
 ```json
 {
-  "amount": 100.00,
+  "paymentReference": "test-ref-123",
+  "amount": 100.50,
   "currency": "USD",
   "paymentMethod": "CREDIT_CARD",
-  "gateway": "STRIPE",
+  "customerId": "cust-123",
+  "merchantId": "merch-456",
+  "description": "Test Payment",
   "paymentDetails": {
+    "type": "CREDIT_CARD",
     "cardNumber": "4242424242424242",
     "expiryMonth": "12",
-    "expiryYear": "2025",
-    "cvv": "123"
+    "expiryYear": "2028",
+    "cvv": "123",
+    "cardHolderName": "Juan Perez"
   }
 }
 ```
@@ -255,6 +265,9 @@ mvn test -Dtest="*Test"
 
 # Ejecutar solo tests de integración
 mvn test -Dtest="*IT"
+
+# Ejecutar tests E2E con Playwright
+npx playwright test
 ```
 
 ### Tests Disponibles
@@ -262,7 +275,266 @@ mvn test -Dtest="*IT"
 - ✅ **Tests Unitarios**: Lógica de dominio y casos de uso
 - ✅ **Tests de Integración**: Controllers y repositorios
 - ✅ **Tests de Arquitectura**: Validación de principios hexagonales
+- ✅ **Tests E2E**: API completa con Playwright
 - ✅ **TestContainers**: Tests con base de datos real
+
+### 🧪 Tests E2E
+
+Los tests E2E (End-to-End) verifican la funcionalidad completa de la API:
+
+#### Ejecución Automática (Recomendado)
+
+**En Windows:**
+```powershell
+# Ejecutar todos los tests E2E con configuración automática
+.\scripts\run-api-tests.ps1
+
+# Ejecutar con environment específico
+.\scripts\run-api-tests.ps1 -Environment "staging"
+```
+
+**En Linux/macOS:**
+```bash
+# Ejecutar todos los tests E2E con configuración automática
+./scripts/run-api-tests.sh
+
+# Ejecutar con environment específico
+./scripts/run-api-tests.sh staging
+```
+
+Los scripts automáticos incluyen:
+- ✅ Verificación de dependencias
+- ✅ Inicio de servicios Docker (PostgreSQL, Redis)
+- ✅ Compilación de la aplicación
+- ✅ Instalación de dependencias Node.js
+- ✅ Instalación de Playwright browsers
+- ✅ Inicio de la aplicación Spring Boot
+- ✅ Ejecución de tests E2E
+- ✅ Limpieza automática de procesos
+- ✅ Generación de reportes HTML
+
+#### Ejecución Manual
+
+```bash
+# 1. Iniciar servicios de infraestructura
+docker-compose up -d postgres redis
+
+# 2. Iniciar aplicación Spring Boot
+mvn spring-boot:run -Dspring.profiles.active=test
+
+# 3. Instalar dependencias de Playwright
+npm install
+npx playwright install
+
+# 4. Ejecutar tests E2E
+npx playwright test tests/api/
+
+# 5. Ejecutar tests específicos
+npx playwright test tests/api/payments/
+npx playwright test tests/api/credit-cards/
+
+# 6. Ver reporte HTML
+npx playwright show-report
+```
+
+### Estructura de Tests E2E
+
+```
+tests/
+├── api/
+│   ├── payments/
+│   │   └── payment-processing.spec.ts
+│   ├── credit-cards/
+│   │   └── credit-card-validation.spec.ts
+│   └── shared/
+│       ├── factories.ts      # Factories para datos de test
+│       ├── setup.ts          # Configuración común
+│       └── validators.ts     # Validadores reutilizables
+```
+
+## ✅ Validación y Manejo de Errores
+
+### 🛡️ Sistema de Validación Robusto
+
+El servicio implementa un sistema completo de validación en múltiples capas:
+
+#### **1. Validación de Entrada (Bean Validation)**
+
+```java
+public record PaymentRequestDTO(
+    @NotBlank(message = "Payment reference is required")
+    String paymentReference,
+    
+    @NotNull(message = "Amount is required")
+    @DecimalMin(value = "0.01", message = "Amount must be positive")
+    BigDecimal amount,
+    
+    @NotBlank(message = "Currency is required")
+    @ValidCurrency(message = "Currency not supported")
+    String currency,
+    
+    @NotNull(message = "Payment method is required")
+    PaymentMethod paymentMethod,
+    
+    @NotBlank(message = "Customer ID is required")
+    String customerId,
+    
+    @NotBlank(message = "Merchant ID is required")
+    String merchantId,
+    
+    @NotNull(message = "Payment details are required")
+    PaymentDetails paymentDetails
+) { }
+```
+
+#### **2. Validaciones Personalizadas**
+
+**Validador de Monedas (`@ValidCurrency`)**:
+```java
+@ValidCurrency(message = "Currency not supported")
+String currency;
+```
+
+Monedas soportadas:
+- `USD`, `EUR`, `GBP`, `JPY`, `CAD`, `AUD`, `CHF`, `SEK`, `NOK`, `DKK`
+
+#### **3. Validación de Dominio**
+
+Las entidades de dominio incluyen validaciones de negocio:
+
+```java
+public record PaymentRequest(...) {
+    public PaymentRequest {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+        // Más validaciones...
+    }
+}
+```
+
+### 🚨 Manejo Global de Errores
+
+El sistema cuenta con un `@ControllerAdvice` que maneja todos los tipos de errores:
+
+#### **Tipos de Errores Manejados**
+
+| Excepción | Código HTTP | Descripción |
+|-----------|-------------|-------------|
+| `IllegalArgumentException` | 400 | Errores de validación de dominio |
+| `MethodArgumentNotValidException` | 400 | Errores de Bean Validation |
+| `HttpMessageNotReadableException` | 400 | JSON malformado o tipos incorrectos |
+| `HttpMediaTypeNotSupportedException` | 415 | Content-Type no soportado |
+| `PaymentException` | 400 | Errores específicos de pagos |
+| `UnsupportedOperationException` | 400 | Operaciones no soportadas |
+| `Exception` | 500 | Errores generales no capturados |
+
+#### **Formato de Respuesta de Error**
+
+```json
+{
+  "timestamp": "2025-07-02T15:54:59.123",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Invalid value for field 'paymentMethod': UNKNOWN",
+  "path": "/api/v1/payments"
+}
+```
+
+### 📋 Casos de Validación Cubiertos
+
+#### **✅ Casos que DEBEN ser rechazados (HTTP 400)**
+
+1. **Referencia de pago**:
+   - Vacía o nula
+   - Solo espacios en blanco
+
+2. **Monto**:
+   - Negativo
+   - Cero
+   - Nulo
+
+3. **Moneda**:
+   - Código inválido (ej: `"INVALID_CURRENCY"`)
+   - Vacía o nula
+
+4. **Método de pago**:
+   - Enum inválido (ej: `"UNKNOWN"`)
+   - Nulo
+
+5. **IDs de cliente y comercio**:
+   - Vacíos o nulos
+
+6. **Detalles de pago**:
+   - Nulos o faltantes
+
+7. **JSON malformado**:
+   - Sintaxis incorrecta
+   - Tipos de datos incorrectos
+
+8. **Content-Type incorrecto** (HTTP 415):
+   - `text/plain` en lugar de `application/json`
+
+#### **✅ Casos que DEBEN ser aceptados (HTTP 200)**
+
+1. **Pagos con tarjeta de crédito válidos**
+2. **Pagos con PayPal válidos**
+3. **Requests sin Content-Type** (Spring Boot lo infiere)
+
+### 🔧 Configuración de Validación
+
+Para habilitar las validaciones, asegúrate de:
+
+1. **Usar `@Valid` en el controlador**:
+```java
+public ResponseEntity<Payment> processPayment(
+    @Valid @RequestBody PaymentRequestDTO paymentRequestDTO
+) {
+    // ...
+}
+```
+
+2. **Incluir dependencias de validación**:
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+```
+
+3. **Configurar el `@ControllerAdvice`**:
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    // Manejo de todas las excepciones
+}
+```
+
+### 🧪 Tests de Validación
+
+Los tests E2E cubren todos los escenarios de validación:
+
+```typescript
+test('debería rechazar pago con datos inválidos', async ({ request }) => {
+  const invalidPaymentData = PaymentRequestFactory.createInvalidPayment();
+  
+  const response = await request.post('/api/v1/payments', {
+    data: invalidPaymentData,
+    headers: ApiSetup.getCommonHeaders()
+  });
+  
+  expect(response.status()).toBe(400);
+  const responseBody = await response.json();
+  expect(responseBody.error).toBe('Bad Request');
+});
+```
+
+### 📊 Métricas de Validación
+
+- ✅ **12/12 tests E2E pasando**
+- ✅ **100% cobertura de casos de error**
+- ✅ **Respuestas HTTP consistentes**
+- ✅ **Mensajes de error descriptivos**
 
 ## 🏗️ Arquitectura
 
@@ -283,8 +555,12 @@ src/main/java/com/paymentgateway/
 │   ├── adapter/         # Implementaciones de puertos
 │   ├── config/          # Configuración
 │   ├── persistence/     # Repositorios JPA
-│   └── web/            # Controllers REST
+│   ├── web/            # Controllers REST
+│   │   ├── controller/  # Controladores
+│   │   └── validation/  # Validaciones personalizadas
+│   └── ...
 └── shared/             # Utilidades compartidas
+    └── exception/      # Excepciones personalizadas
 ```
 
 ## 🚀 CI/CD Pipeline
@@ -301,6 +577,7 @@ El proyecto incluye un pipeline automatizado de CI/CD que se ejecuta en cada Pul
 2. **🏗️ Build & Test**
    - Compilación del proyecto
    - Tests unitarios, integración y arquitectura
+   - Tests E2E con Playwright
    - Generación de reportes de cobertura
    - Creación de artefactos JAR
 
@@ -339,6 +616,9 @@ El proyecto incluye un pipeline automatizado de CI/CD que se ejecuta en cada Pul
 
 - [ ] Código sigue las convenciones del proyecto
 - [ ] Tests añadidos y pasando localmente
+- [ ] Tests E2E actualizados si es necesario
+- [ ] Validaciones implementadas para nuevos campos
+- [ ] Manejo de errores apropiado
 - [ ] Documentación actualizada
 - [ ] Sin warnings de linter
 - [ ] Cobertura de tests mantenida
@@ -349,8 +629,10 @@ El proyecto incluye un pipeline automatizado de CI/CD que se ejecuta en cada Pul
 - Mantener cobertura de tests > 70%
 - Usar Lombok para reducir boilerplate
 - Documentar APIs con OpenAPI/Swagger
-- Validar entrada de datos
-- Manejar errores apropiadamente
+- **Validar toda entrada de datos**
+- **Manejar errores apropiadamente con códigos HTTP correctos**
+- Implementar validaciones tanto en DTO como en dominio
+- Crear tests para todos los casos de error
 
 ## 📝 Notas Adicionales
 
@@ -369,7 +651,8 @@ Los logs se almacenan en:
 ### Seguridad
 
 - Autenticación JWT
-- Validación de entrada
+- **Validación completa de entrada**
+- **Manejo seguro de errores sin exposición de información sensible**
 - Cifrado de datos sensibles
 - Rate limiting
 
@@ -382,5 +665,6 @@ Si tienes problemas con la configuración o ejecución del proyecto, revisa:
 2. Las variables de entorno estén configuradas
 3. Los puertos 8080, 5432 y 6379 estén disponibles
 4. Las credenciales de Stripe y PayPal sean válidas(para ejecutar el proyecto no son necesarios)
+5. **Que todos los tests E2E pasen antes de hacer cambios**
 
 **Happy Coding! 🚀** 

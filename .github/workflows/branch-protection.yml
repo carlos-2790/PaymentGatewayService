@@ -1,0 +1,16 @@
+name: Branch Protection
+
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  prevent-direct-push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Bloquear push directo
+        run: |
+          echo "❌ Push directo a rama protegida no permitido"
+          echo "🔄 Por favor, crea un Pull Request"
+          exit 1 
