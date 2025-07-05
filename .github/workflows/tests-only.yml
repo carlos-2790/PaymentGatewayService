@@ -1,0 +1,66 @@
+name: Tests Only (Sin Servidor Spring Boot)
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [21]
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Configurar JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+        
+    - name: Cache dependencias Maven
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: Ejecutar tests unitarios (sin servidor)
+      run: |
+        mvn clean test \
+          -Dspring.profiles.active=unit \
+          -Dspring.main.web-application-type=none \
+          -Dmaven.test.failure.ignore=false \
+          -B
+      env:
+        SPRING_PROFILES_ACTIVE: unit
+        SPRING_MAIN_WEB_APPLICATION_TYPE: none
+        
+    - name: Ejecutar tests de integración (sin servidor)
+      run: |
+        mvn test \
+          -Dspring.profiles.active=ci \
+          -Dspring.main.web-application-type=none \
+          -Dtest=**/*IntegrationTest \
+          -B
+      env:
+        SPRING_PROFILES_ACTIVE: ci
+        SPRING_MAIN_WEB_APPLICATION_TYPE: none
+        
+    - name: Generar reporte de cobertura
+      run: mvn jacoco:report
+      
+    - name: Subir resultados de tests
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.java-version }}
+        path: |
+          target/surefire-reports/
+          target/site/jacoco/ 

@@ -1,0 +1,68 @@
+# Configuración para tests unitarios (sin servidor web)
+spring:
+  profiles:
+    active: unit
+    
+  # Deshabilitar completamente el servidor web
+  main:
+    web-application-type: none
+    
+  # Excluir todas las auto-configuraciones web
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.servlet.DispatcherServletAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.embedded.EmbeddedWebServerFactoryCustomizerAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.servlet.HttpEncodingAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.servlet.MultipartAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.actuate.web.server.ManagementContextAutoConfiguration
+    
+  # Base de datos en memoria ultra rápida
+  datasource:
+    url: jdbc:h2:mem:unittest;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        
+  # Desactivar completamente servicios externos
+  flyway:
+    enabled: false
+
+# Logging mínimo para tests unitarios
+logging:
+  level:
+    com.paymentgateway: WARN
+    org.springframework: WARN
+    org.hibernate: WARN
+    root: ERROR
+  pattern:
+    console: "%d{HH:mm:ss} %-5level %logger{36} - %msg%n"
+
+# Configuración de pasarelas de pago para testing (mocks)
+stripe:
+  api:
+    secret-key: sk_test_mock
+    publishable-key: pk_test_mock
+
+paypal:
+  client:
+    id: mock_paypal_id
+    secret: mock_paypal_secret
+  environment: sandbox 

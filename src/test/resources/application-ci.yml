@@ -3,6 +3,15 @@ spring:
   profiles:
     active: ci
     
+  # Excluir auto-configuraciones innecesarias para CI/CD
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+    
   # Base de datos en memoria para CI/CD
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
@@ -32,29 +41,28 @@ spring:
   security:
     require-ssl: false
 
-# Puerto para CI/CD
-server:
-  port: 8080
-
-# Configuración de management para CI/CD
+# Configuración de management para CI/CD (mínima)
 management:
   endpoints:
+    enabled-by-default: false
     web:
       exposure:
-        include: health,info,metrics
+        include: health
   endpoint:
     health:
-      show-details: always
+      enabled: true
+      show-details: never
 
-# Configuración de logging para CI/CD
+# Configuración de logging para CI/CD (mínima)
 logging:
   level:
     com.paymentgateway: INFO
-    org.springframework.web: INFO
+    org.springframework.web: WARN
     org.hibernate: WARN
+    org.springframework.security: WARN
     root: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 # Configuración de pasarelas de pago para testing
 stripe:
