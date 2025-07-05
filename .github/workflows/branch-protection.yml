@@ -1,0 +1,80 @@
+name: 🛡️ Protección de Ramas
+
+on:
+  push:
+    branches: [ main, develop ]
+
+# Permisos mínimos
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  block-direct-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: ❌ Bloquear push directo a rama protegida
+      run: |
+        echo "🚫 PUSH DIRECTO BLOQUEADO"
+        echo "═══════════════════════════════════════"
+        echo "❌ No se permiten pushes directos a las ramas main/develop"
+        echo "📋 Proceso correcto:"
+        echo "   1. Crear una rama feature/nombre-feature"
+        echo "   2. Hacer commits en la rama feature"
+        echo "   3. Crear Pull Request hacia develop o main"
+        echo "   4. Esperar aprobación y merge"
+        echo ""
+        echo "👤 Usuario: ${{ github.actor }}"
+        echo "🌿 Rama: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo "═══════════════════════════════════════"
+        
+        # Solo permitir al owner hacer pushes directos
+        AUTHORIZED_USERS="carlos-2790"
+        
+        if [[ "$AUTHORIZED_USERS" == *"${{ github.actor }}"* ]]; then
+          echo "✅ Usuario autorizado para push directo: ${{ github.actor }}"
+          echo "⚠️  ADVERTENCIA: Evita pushes directos, usa PRs cuando sea posible"
+          exit 0
+        else
+          echo "❌ Usuario NO autorizado para push directo: ${{ github.actor }}"
+          exit 1
+        fi
+    
+    - name: 📝 Crear issue de violación (si falla)
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `🚫 Push directo bloqueado - ${context.payload.head_commit.message}`;
+          const body = `
+          ## 🛡️ Violación de Protección de Rama
+          
+          **Usuario:** @${{ github.actor }}
+          **Rama:** \`${{ github.ref_name }}\`
+          **Commit:** \`${{ github.sha }}\`
+          **Mensaje:** ${{ github.event.head_commit.message }}
+          **Fecha:** ${new Date().toISOString()}
+          
+          ### 📋 Proceso Correcto:
+          1. Crear rama feature: \`git checkout -b feature/nombre-feature\`
+          2. Hacer commits en la rama feature
+          3. Push a la rama feature: \`git push origin feature/nombre-feature\`
+          4. Crear Pull Request hacia develop o main
+          5. Esperar aprobación y merge
+          
+          ### ⚠️ Acción Requerida:
+          - [ ] Revertir el push directo
+          - [ ] Crear rama feature apropiada
+          - [ ] Crear Pull Request
+          
+          **Este issue se cerrará automáticamente cuando se corrija la violación.**
+          `;
+          
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['violation', 'branch-protection']
+          }); 

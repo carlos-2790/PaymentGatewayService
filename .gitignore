@@ -265,6 +265,7 @@ coverage.xml
 
 # TestContainers
 .testcontainers/
+playwright-report/
 
 # =================================
 # LOGS Y TEMPORALES

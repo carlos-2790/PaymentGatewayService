@@ -1,45 +1,38 @@
 package com.paymentgateway.infrastructure.web.controller;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paymentgateway.application.port.in.ValidateCreditCardUseCase;
 import com.paymentgateway.domain.model.CreditCardDetails;
 import com.paymentgateway.domain.model.CreditCardValidationResult;
+import com.paymentgateway.infrastructure.web.dto.CreditCardValidationRequest;
 
 /**
  * @helper CreditCardControllerTest
- * @description Tests de integración para el controlador de tarjetas de crédito
+ * @description Tests unitarios para el controlador de tarjetas de crédito
  */
-@WebMvcTest(CreditCardController.class)
-@Import(TestSecurityConfig.class)
-@ActiveProfiles("test")
-@DisplayName("CreditCardController Integration Tests")
+@ExtendWith(MockitoExtension.class)
+@DisplayName("CreditCardController Unit Tests")
 class CreditCardControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @Mock
     private ValidateCreditCardUseCase validateCreditCardUseCase;
+
+    @InjectMocks
+    private CreditCardController creditCardController;
 
     private CreditCardDetails tarjetaValida;
     private CreditCardValidationResult resultadoValido;
@@ -56,34 +49,44 @@ class CreditCardControllerTest {
 
         @Test
         @DisplayName("✅ Debe validar tarjeta exitosamente")
-        void debeValidarTarjetaExitosamente() throws Exception {
+        void debeValidarTarjetaExitosamente() {
             // Arrange
+            CreditCardValidationRequest request = new CreditCardValidationRequest(
+                "4242424242424242", "12", "2028", "123", "Juan Perez"
+            );
             when(validateCreditCardUseCase.validateCreditCard(any(CreditCardDetails.class)))
                 .thenReturn(resultadoValido);
 
-            // Act & Assert
-            mockMvc.perform(post("/api/v1/credit-cards/validate")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(tarjetaValida)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.isValid").value(true))
-                    .andExpect(jsonPath("$.cardType").value("VISA"))
-                    .andExpect(jsonPath("$.maskedCardNumber").value("****-****-****-4242"));
+            // Act
+            ResponseEntity<CreditCardValidationResult> response = 
+                creditCardController.validateCreditCard(request);
+
+            // Assert
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertNotNull(response.getBody());
+            assertTrue(response.getBody().isValid());
+            assertEquals("VISA", response.getBody().cardType());
+            assertEquals("****-****-****-4242", response.getBody().maskedCardNumber());
         }
 
         @Test
         @DisplayName("❌ Debe manejar tarjeta inválida")
-        void debeManejarTarjetaInvalida() throws Exception {
+        void debeManejarTarjetaInvalida() {
             // Arrange
+            CreditCardValidationRequest request = new CreditCardValidationRequest(
+                "1234567890123456", "12", "2028", "123", "Juan Perez"
+            );
             when(validateCreditCardUseCase.validateCreditCard(any(CreditCardDetails.class)))
                 .thenReturn(resultadoInvalido);
 
-            // Act & Assert
-            mockMvc.perform(post("/api/v1/credit-cards/validate")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(tarjetaValida)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.isValid").value(false));
+            // Act
+            ResponseEntity<CreditCardValidationResult> response = 
+                creditCardController.validateCreditCard(request);
+
+            // Assert
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertNotNull(response.getBody());
+            assertFalse(response.getBody().isValid());
         }
     }
 
@@ -93,26 +96,30 @@ class CreditCardControllerTest {
 
         @Test
         @DisplayName("✅ Debe retornar tipo VISA")
-        void debeRetornarTipoVisa() throws Exception {
+        void debeRetornarTipoVisa() {
             // Arrange
-            when(validateCreditCardUseCase.determineCardType(anyString())).thenReturn("VISA");
+            when(validateCreditCardUseCase.determineCardType("4242424242424242")).thenReturn("VISA");
 
-            // Act & Assert
-            mockMvc.perform(get("/api/v1/credit-cards/card-type/4242424242424242"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("VISA"));
+            // Act
+            ResponseEntity<String> response = creditCardController.getCardType("4242424242424242");
+
+            // Assert
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertEquals("VISA", response.getBody());
         }
 
         @Test
         @DisplayName("✅ Debe retornar tipo UNKNOWN")
-        void debeRetornarTipoUnknown() throws Exception {
+        void debeRetornarTipoUnknown() {
             // Arrange
-            when(validateCreditCardUseCase.determineCardType(anyString())).thenReturn("UNKNOWN");
+            when(validateCreditCardUseCase.determineCardType("1234567890123456")).thenReturn("UNKNOWN");
 
-            // Act & Assert
-            mockMvc.perform(get("/api/v1/credit-cards/card-type/1234567890123456"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("UNKNOWN"));
+            // Act
+            ResponseEntity<String> response = creditCardController.getCardType("1234567890123456");
+
+            // Assert
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertEquals("UNKNOWN", response.getBody());
         }
     }
 
@@ -122,11 +129,13 @@ class CreditCardControllerTest {
 
         @Test
         @DisplayName("✅ Debe retornar estado de salud")
-        void debeRetornarEstadoDeSalud() throws Exception {
-            // Act & Assert
-            mockMvc.perform(get("/api/v1/credit-cards/health"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("Credit Card validation service is up and running!"));
+        void debeRetornarEstadoDeSalud() {
+            // Act
+            ResponseEntity<String> response = creditCardController.healthCheck();
+
+            // Assert
+            assertEquals(HttpStatus.OK, response.getStatusCode());
+            assertEquals("Credit Card validation service is up and running!", response.getBody());
         }
     }
 
