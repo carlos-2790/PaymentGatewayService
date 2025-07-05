@@ -1,0 +1,21 @@
+# Git attributes file
+# Especifica cómo Git debe tratar ciertos archivos
+
+# CODEOWNERS no es un Dockerfile
+.github/CODEOWNERS linguist-language=Text
+.github/CODEOWNERS linguist-detectable=false
+
+# Archivos de configuración
+*.yml linguist-language=YAML
+*.yaml linguist-language=YAML
+*.json linguist-language=JSON
+*.md linguist-language=Markdown
+
+# Archivos de Java
+*.java linguist-language=Java
+*.properties linguist-language=Properties
+
+# Archivos de build
+pom.xml linguist-language=XML
+Dockerfile linguist-language=Dockerfile
+docker-compose.yml linguist-language=YAML 
