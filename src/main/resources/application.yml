@@ -130,3 +130,56 @@ spring:
         level:
             com.paymentgateway: INFO
             root: WARN
+
+---
+# Perfil de desarrollo local (sin servicios externos)
+spring:
+    config:
+        activate:
+            on-profile: local
+    
+    # Excluir auto-configuraciones problemáticas
+    autoconfigure:
+        exclude:
+            - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+            - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+            - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+    
+    # Base de datos en memoria H2
+    datasource:
+        url: jdbc:h2:mem:payment_gateway
+        username: sa
+        password: 
+        driver-class-name: org.h2.Driver
+        hikari:
+            connection-timeout: 20000
+            maximum-pool-size: 5
+            minimum-idle: 2
+    
+    jpa:
+        hibernate:
+            ddl-auto: create-drop
+        show-sql: true
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.H2Dialect
+                format_sql: true
+    
+    # Deshabilitar Flyway para desarrollo local
+    flyway:
+        enabled: false
+    
+    # Consola H2 habilitada
+    h2:
+        console:
+            enabled: true
+            path: /h2-console
+
+# Configuración de logging para desarrollo local
+logging:
+    level:
+        com.paymentgateway: DEBUG
+        org.springframework.security: INFO
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+        root: INFO
