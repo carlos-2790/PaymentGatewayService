@@ -1,18 +1,33 @@
-# Archivo CODEOWNERS - Define quién puede aprobar cambios en el repositorio
-# Solo carlos-2790 puede aprobar PRs hacia develop y main
+# GitHub CODEOWNERS file
+# This file defines individuals or teams responsible for code in a repository
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# Reglas globales - carlos-2790 debe aprobar todos los cambios
+# Solo el owner puede aprobar cambios críticos
+
+# Todas las ramas requieren aprobación del owner
 * @carlos-2790
 
-# Archivos críticos que requieren aprobación especial
+# Archivos críticos requieren aprobación específica
 /.github/ @carlos-2790
+/src/main/ @carlos-2790
+/pom.xml @carlos-2790
 /docker-compose.yml @carlos-2790
 /Dockerfile @carlos-2790
-/pom.xml @carlos-2790
-/src/main/resources/application.yml @carlos-2790
 
-# Archivos de configuración de seguridad
+# Configuraciones de CI/CD
+/.github/workflows/ @carlos-2790
+/scripts/ @carlos-2790
+
+# Archivos de configuración de Spring Boot
+/src/main/resources/ @carlos-2790
 /src/main/java/com/paymentgateway/infrastructure/config/ @carlos-2790
 
 # Archivos de migración de base de datos
-/src/main/resources/db/migration/ @carlos-2790 
+/src/main/resources/db/migration/ @carlos-2790
+
+# Código de dominio y aplicación
+/src/main/java/com/paymentgateway/domain/ @carlos-2790
+/src/main/java/com/paymentgateway/application/ @carlos-2790
+
+# Tests críticos
+/src/test/java/com/paymentgateway/ @carlos-2790 
