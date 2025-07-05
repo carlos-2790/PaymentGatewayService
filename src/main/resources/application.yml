@@ -82,6 +82,12 @@ management:
             export:
                 enabled: true
 
+# Configuración del servidor
+server:
+    port: 8080
+    servlet:
+        context-path: /
+
 # Configuración de Swagger
 springdoc:
     api-docs:
