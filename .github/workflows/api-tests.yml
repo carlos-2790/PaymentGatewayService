@@ -86,16 +86,11 @@ jobs:
     - name: 🚀 Iniciar aplicación Spring Boot
       run: |
         mvn spring-boot:run \
-          -Dspring-boot.run.jvmArguments="-Dspring.profiles.active=test" \
-          -Dspring.datasource.url=jdbc:postgresql://localhost:5432/payment_gateway_test \
-          -Dspring.datasource.username=test_user \
-          -Dspring.datasource.password=test_password \
-          -Dspring.data.redis.host=localhost \
-          -Dspring.data.redis.port=6379 &
+          -Dspring-boot.run.jvmArguments="-Dspring.profiles.active=ci" &
         echo $! > app.pid
         
         # Esperar a que la aplicación esté lista
-        timeout 120s bash -c 'until curl -f http://localhost:8080/api/v1/payments/health; do sleep 2; done'
+        timeout 120s bash -c 'until curl -f http://localhost:8080/actuator/health; do sleep 2; done'
         echo "✅ Aplicación iniciada correctamente"
     
     - name: 🧪 Ejecutar tests E2E de API

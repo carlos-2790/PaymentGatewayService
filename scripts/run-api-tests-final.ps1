@@ -393,6 +393,7 @@ function Test-SpringBootHealth {
     Write-Host "8. Verificacion de salud..." -ForegroundColor Blue
     
     $checks = @(
+        @{ Name = "Actuator Health"; Url = "/actuator/health" },
         @{ Name = "Payments Health"; Url = "/api/v1/payments/health" },
         @{ Name = "Credit Cards Health"; Url = "/api/v1/credit-cards/health" },
         @{ Name = "Swagger UI"; Url = "/swagger-ui.html" }

@@ -1,0 +1,69 @@
+# Configuración específica para CI/CD
+spring:
+  profiles:
+    active: ci
+    
+  # Base de datos en memoria para CI/CD
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        
+  # Desactivar servicios externos para CI/CD
+  data:
+    redis:
+      repositories:
+        enabled: false
+        
+  # Desactivar Flyway para CI/CD
+  flyway:
+    enabled: false
+    
+  # Configuración de seguridad para CI/CD
+  security:
+    require-ssl: false
+
+# Puerto para CI/CD
+server:
+  port: 8080
+
+# Configuración de management para CI/CD
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Configuración de logging para CI/CD
+logging:
+  level:
+    com.paymentgateway: INFO
+    org.springframework.web: INFO
+    org.hibernate: WARN
+    root: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Configuración de pasarelas de pago para testing
+stripe:
+  api:
+    secret-key: sk_test_fake_key_for_testing
+    publishable-key: pk_test_fake_key_for_testing
+
+paypal:
+  client:
+    id: fake_paypal_client_id
+    secret: fake_paypal_client_secret
+  environment: sandbox 

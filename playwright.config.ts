@@ -49,8 +49,8 @@ export default defineConfig({
 
   /* Ejecutar servidor local antes de iniciar las pruebas */
   webServer: {
-    command: 'mvn spring-boot:run -Dspring.profiles.active=test',
-    url: 'http://localhost:8080/api/v1/payments/health',
+    command: 'mvn spring-boot:run -Dspring.profiles.active=ci',
+    url: 'http://localhost:8080/actuator/health',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

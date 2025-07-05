@@ -23,10 +23,24 @@ spring:
     redis:
       repositories:
         enabled: false
+        
+  # Desactivar Flyway para pruebas
+  flyway:
+    enabled: false
 
-# Puerto diferente para pruebas
+# Puerto para pruebas
 server:
   port: 8080
+
+# Configuración de management para pruebas
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
 
 # Configuración de logging para pruebas
 logging:
