@@ -199,8 +199,9 @@ jobs:
         echo "$JSON_PAYLOAD"
 
         # 5. Enviar a n8n
-        curl -X POST -H "Content-Type: application/json" \
+        curl -v -X POST -H "Content-Type: application/json" \
         -d "$JSON_PAYLOAD" \
+        -w "\n\nCódigo de estado HTTP: %{http_code}\n" \
         "https://carlosybn.app.n8n.cloud/webhook/metrics-report"
 
   # Job de bloqueo para usuarios no autorizados
