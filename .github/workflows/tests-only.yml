@@ -1,12 +1,18 @@
 name: CI/CD - Tests Unitarios y API
 
 on:
-  # Solo ejecutar en Pull Requests hacia main y develop
+  # Ejecutar en pushes a cualquier rama EXCEPTO main y develop
+  push:
+    branches-ignore:
+      - 'main'
+      - 'develop'
+      
+  # Ejecutar en Pull Requests hacia main y develop
   pull_request:
     branches: [ main, develop ]
     types: [ opened, synchronize, reopened ]
   
-  # Permitir ejecución manual solo para el owner
+  # Permitir ejecución manual
   workflow_dispatch:
 
 # Configuración de permisos restrictivos
@@ -18,7 +24,7 @@ permissions:
 jobs:
   # Job de validación de usuario
   validate-user:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Este job solo se ejecuta en PRs
     if: github.event_name == 'pull_request'
     outputs:
       is-authorized: ${{ steps.check-user.outputs.authorized }}
@@ -41,7 +47,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     needs: validate-user
-    if: needs.validate-user.outputs.is-authorized == 'true'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && needs.validate-user.outputs.is-authorized == 'true')
     
     strategy:
       matrix:
@@ -132,11 +138,76 @@ jobs:
           target/site/jacoco/
         retention-days: 30
 
+    - name: 📦 Enviar métricas a Webhook n8n
+      if: always() # Ejecutar siempre, incluso si los tests fallan
+      run: |
+        echo "📦 Preparando y enviando métricas a n8n..."
+        
+        # 1. Extraer métricas de Cobertura (JaCoCo)
+        COVERAGE_FILE="target/site/jacoco/jacoco.xml"
+        if [ -f "$COVERAGE_FILE" ]; then
+          COVERED_LINES=$(grep -oP '<counter type="LINE" missed="\d+" covered="\K\d+' "$COVERAGE_FILE")
+          MISSED_LINES=$(grep -oP '<counter type="LINE" missed="\K\d+' "$COVERAGE_FILE")
+          TOTAL_LINES=$((COVERED_LINES + MISSED_LINES))
+          COVERAGE_PERCENTAGE=$(awk "BEGIN {printf \"%.2f\", $COVERED_LINES / $TOTAL_LINES * 100}")
+        else
+          COVERAGE_PERCENTAGE="0"
+        fi
+
+        # 2. Extraer resultados de Tests (Surefire)
+        TESTS_RUN=$(grep -r '<testcase' target/surefire-reports/ | wc -l)
+        FAILURES=$(grep -r '<failure' target/surefire-reports/ | wc -l)
+        ERRORS=$(grep -r '<error' target/surefire-reports/ | wc -l)
+        SKIPPED=$(grep -r '<skipped' target/surefire-reports/ | wc -l)
+        PASSED=$((TESTS_RUN - FAILURES - ERRORS - SKIPPED))
+        TOTAL_FAILED=$((FAILURES + ERRORS))
+
+        # 3. Calcular tiempo total de ejecución de tests
+        TOTAL_SECONDS_FLOAT=$(grep -rh '<testsuite' target/surefire-reports/ | grep -oP 'time="\K[0-9.]+' | awk '{s+=$1} END {print s}')
+        if [[ -z "$TOTAL_SECONDS_FLOAT" ]]; then
+          TOTAL_SECONDS_FLOAT=0
+        fi
+        TOTAL_SECONDS_INT=${TOTAL_SECONDS_FLOAT%.*}
+        MINUTES=$((TOTAL_SECONDS_INT / 60))
+        SECONDS=$((TOTAL_SECONDS_INT % 60))
+        TIEMPO_TOTAL="${MINUTES}m ${SECONDS}s"
+        
+        # 4. Construir el payload JSON
+        JSON_PAYLOAD=$(cat <<EOF
+        {
+          "repository": "${{ github.repository }}",
+          "branch": "${{ github.head_ref || github.ref_name }}",
+          "commit_sha": "${{ github.sha }}",
+          "actor": "${{ github.actor }}",
+          "run_id": ${{ github.run_id }},
+          "fechaHora": "$(date '+%Y-%m-%d %H:%M:%S')",
+          "entorno": "staging",
+          "framework": "JUnit 5 + Maven Surefire",
+          "tiempoTotal": "$TIEMPO_TOTAL",
+          "coverage_percentage": ${COVERAGE_PERCENTAGE},
+          "tests": {
+            "totalTests": ${TESTS_RUN},
+            "exitosos": ${PASSED},
+            "fallidos": ${TOTAL_FAILED},
+            "skipped": ${SKIPPED}
+          }
+        }
+        EOF
+        )
+
+        echo "📤 Enviando payload:"
+        echo "$JSON_PAYLOAD"
+
+        # 5. Enviar a n8n
+        curl -X POST -H "Content-Type: application/json" \
+        -d "$JSON_PAYLOAD" \
+        "https://carlosybn.app.n8n.cloud/webhook/metrics-report"
+
   # Job de bloqueo para usuarios no autorizados
   block-unauthorized:
     runs-on: ubuntu-latest
     needs: validate-user
-    if: needs.validate-user.outputs.is-authorized == 'false'
+    if: github.event_name == 'pull_request' && needs.validate-user.outputs.is-authorized == 'false'
     steps:
     - name: ❌ Bloquear PR de usuario no autorizado
       run: |
